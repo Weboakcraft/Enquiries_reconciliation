@@ -1,0 +1,1 @@
+{"name":"oakcraft-reconciler-tests","private":true,"dependencies":{"exceljs":"4.4.0","playwright":"^1.47.0","xlsx":"0.18.5"}}
