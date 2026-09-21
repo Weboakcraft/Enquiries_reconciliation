@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+node_modules/
+tests/out_*.json
+tests/out_*.xlsx
+tests/sample_*.xlsx
+tests/e2e_*.xlsx
+tests/e2eroot/
+tests/shot_*.png
+web-src/build/
+server/data/runs/*.json
+server/data/exports/*.xlsx
