@@ -1,8 +1,7 @@
 # Publishes web/ to GitHub Pages on every push to main.
 #
-# One-time setup: Settings -> Pages -> Build and deployment -> Source:
-# "GitHub Actions". The site then appears at
-# https://<owner>.github.io/<repo>/
+# configure-pages runs with enablement: true, so the first run turns Pages on
+# for this repository by itself — there is no setting to flip by hand.
 name: Deploy site
 
 on:
@@ -29,6 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
