@@ -1,0 +1,22 @@
+# Render blueprint. Point Render at this repo, choose "server" as the root
+# directory, and it will build the Dockerfile above.
+#
+# The disk is what keeps the week-on-week history: without it every deploy
+# wipes data/runs and the trend view starts empty again.
+services:
+  - type: web
+    name: oakcraft-lead-reconciler
+    runtime: docker
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    plan: starter          # the free plan has no persistent disk
+    healthCheckPath: /api/runs
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: WEB_CONCURRENCY
+        value: 2
+    disk:
+      name: oak-run-history
+      mountPath: /app/data
+      sizeGB: 1

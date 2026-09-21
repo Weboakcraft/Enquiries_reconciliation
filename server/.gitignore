@@ -1,0 +1,4 @@
+data/runs/*.json
+data/exports/*
+__pycache__/
+*.pyc

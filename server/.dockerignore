@@ -1,0 +1,7 @@
+data/runs/*.json
+data/exports/*.xlsx
+__pycache__/
+*.pyc
+.venv/
+venv/
+.git/
