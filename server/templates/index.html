@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OakCraft Lead Reconciler</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e4a52'/><path d='M7 9h18l-7 8v7l-4 2v-9z' fill='%23b4762e'/></svg>">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <div class="rail"></div>
+      <div>
+        <h1>Lead Reconciler</h1>
+        <div class="sub">OakCraft Sales MIS</div>
+      </div>
+    </div>
+    <nav id="nav">
+      <div class="grp eyebrow">Start</div>
+      <button data-view="upload" aria-current="true">Upload &amp; run</button>
+      <div class="grp eyebrow">Results</div>
+      <button data-view="overview" disabled>Overview</button>
+      <button data-view="master" disabled>Master report</button>
+      <button data-view="people" disabled>Employees</button>
+      <button data-view="sources" disabled>Sources &amp; quality</button>
+      <button data-view="demand" disabled>Demand &amp; loss</button>
+      <button data-view="unassigned" disabled>Unassigned<span class="n" id="navUn"></span></button>
+      <div class="grp eyebrow">Audit</div>
+      <button data-view="recon" disabled>Reconciliation</button>
+      <button data-view="exceptions" disabled>Exceptions<span class="n" id="navEx"></span></button>
+      <div class="grp eyebrow">Over time</div>
+      <button data-view="history">History &amp; trend</button>
+    </nav>
+    <div class="foot">
+      Runs locally · nothing is uploaded<br>
+      <span id="runLabel">No run loaded</span>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ══════════════ UPLOAD ══════════════ -->
+    <section id="v-upload">
+      <div class="top"><div>
+        <h2>Upload your reports</h2>
+        <p class="hint">Drop the IndiaMART, JustDial and Meta exports in together. The format of each
+          sheet is detected automatically, the three are reconciled into one register, and every
+          figure is produced from that. Nothing leaves this computer.</p>
+      </div></div>
+
+      <div class="drop" id="drop">
+        <div class="icon">&#8682;</div>
+        <h3>Drag your Excel files here</h3>
+        <p>Or click to browse. Accepts .xlsx, .xlsm and .xls — up to {{ max_mb }} MB per file.
+           You can upload one file or all of them at once.</p>
+        <button class="btn" id="browse" type="button">Choose files</button>
+        <input type="file" id="file" multiple accept=".xlsx,.xlsm,.xls" hidden>
+      </div>
+
+      <div class="flist" id="flist"></div>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap">
+        <button class="btn" id="run" disabled>Run reconciliation</button>
+        <button class="btn ghost sm" id="clear" hidden>Clear</button>
+        <span class="eyebrow" id="status"></span>
+      </div>
+      <div class="bar" id="prog" hidden><i></i></div>
+
+      <div class="panel" id="recentWrap" style="margin-top:20px" hidden>
+        <div class="phead"><h3>Recent runs</h3></div>
+        <p class="sub">Open a previous week without re-uploading anything.</p>
+        <div id="recent"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ OVERVIEW ══════════════ -->
+    <section id="v-overview" hidden>
+      <div class="top"><div><h2>Overview</h2><p class="hint" id="ovPeriod"></p></div>
+        <div style="display:flex;gap:8px"><button class="btn sm" id="dl">Download Excel report</button></div></div>
+      <div class="kpis" id="ovKpis"></div>
+      <div class="grid g2">
+        <div class="panel">
+          <div class="phead"><h3>Where the leads are sitting</h3><span class="eyebrow" id="fnScope">All sources</span></div>
+          <p class="sub">Every source uses different words for the same thing. All of them are mapped
+            onto the one funnel below, so the columns actually add up.</p>
+          <div class="seg" id="srcFilter" style="margin-bottom:12px"></div>
+          <div class="fn" id="funnel"></div>
+          <div class="note" id="fnNote"></div>
+        </div>
+        <div class="panel">
+          <div class="phead"><h3>Untouched ageing</h3><span class="eyebrow" id="asof"></span></div>
+          <p class="sub">How long leads nobody has worked have been sitting. Red bars are 2 days or older.</p>
+          <div class="cols" id="ageing"></div>
+          <div class="note" id="ageNote"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h3>What the data is telling you</h3><span class="eyebrow">Ranked by cost to the business</span></div>
+        <div id="insights"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MASTER REPORT ══════════════ -->
+    <section id="v-master" hidden>
+      <div class="top"><div><h2>Master report</h2>
+        <p class="hint">The same four blocks as your standard weekly format — employee wise, source wise,
+          stage wise and lead quality. This is what the Excel download contains.</p></div>
+        <button class="btn sm" id="dl2">Download Excel report</button></div>
+      <div class="panel"><div class="phead"><h3>Employee wise snapshot</h3><span class="eyebrow" id="mrPeriod"></span></div>
+        <div class="tw"><table id="tEmp"></table></div></div>
+      <div class="grid g2">
+        <div class="panel"><h3>Source wise snapshot</h3><div class="tw" style="margin-top:12px"><table id="tSrc"></table></div></div>
+        <div class="panel"><h3>Stage wise snapshot</h3><div class="tw" style="margin-top:12px"><table id="tStage"></table></div></div>
+      </div>
+      <div class="panel"><h3>Lead quality snapshot</h3>
+        <p class="sub">Taken from the Lead's Quality column. Feeds that carry no rating show as Not Rated.</p>
+        <div class="tw"><table id="tQual"></table></div></div>
+    </section>
+
+    <!-- ══════════════ PEOPLE ══════════════ -->
+    <section id="v-people" hidden>
+      <div class="top"><div><h2>Employees</h2>
+        <p class="hint">Each bar is that person's own 100%. Amber is work not started, the blue-green band
+          is live pipeline, green is won, red is closed without an order.</p></div></div>
+      <div class="panel">
+        <div class="phead"><h3>Stage split</h3><span class="eyebrow" id="peopleScope">All sources</span></div>
+        <div class="seg" id="srcFilter2" style="margin:10px 0 14px"></div>
+        <div id="reps"></div><div class="legend" id="legend"></div>
+      </div>
+      <div class="panel"><h3>Conversion scorecard</h3>
+        <p class="sub">Conversion % is Won ÷ leads assigned. Qualification rate is the fairer weekly
+          measure, because a B2B order rarely closes inside seven days.</p>
+        <div class="tw"><table id="tScore"></table></div></div>
+    </section>
+
+    <!-- ══════════════ SOURCES ══════════════ -->
+    <section id="v-sources" hidden>
+      <div class="top"><div><h2>Sources &amp; lead quality</h2>
+        <p class="hint">Which feed is actually worth the money — by qualification rate, by pieces of
+          demand, and by how many hot leads it produces.</p></div></div>
+      <div class="panel"><h3>Source performance</h3><div class="tw" style="margin-top:12px"><table id="tSrcPerf"></table></div></div>
+      <div class="grid g2">
+        <div class="panel"><h3>Platform detail</h3>
+          <p class="sub">Where a feed reports its own sub-channel.</p>
+          <div class="tw"><table id="tDetail"></table></div></div>
+        <div class="panel"><h3>Lead quality mix</h3>
+          <div class="tw" style="margin-top:12px"><table id="tQual2"></table></div></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ DEMAND ══════════════ -->
+    <section id="v-demand" hidden>
+      <div class="top"><div><h2>Demand &amp; loss</h2>
+        <p class="hint">Counting leads hides the size of what was lost. This view counts pieces.</p></div></div>
+      <div class="kpis" id="demKpis"></div>
+      <div class="grid g2">
+        <div class="panel"><h3>Why that demand was lost</h3>
+          <p class="sub">Rows shaded amber are range or interest problems, not dead leads.</p>
+          <div class="tw"><table id="tDemand"></table></div></div>
+        <div class="panel"><h3>Every disposition</h3>
+          <p class="sub">All leads closed without an order, by the reason a rep recorded.</p>
+          <div class="tw"><table id="tDisp"></table></div></div>
+      </div>
+      <div class="panel"><h3>Worth chasing again</h3>
+        <p class="sub">Closed without an order, but either rated hot/warm, asking for 10+ pieces, or
+          carrying a note that records live interest.</p>
+        <div class="tw"><table id="tRecover"></table></div></div>
+    </section>
+
+    <!-- ══════════════ UNASSIGNED ══════════════ -->
+    <section id="v-unassigned" hidden>
+      <div class="top"><div><h2>Unassigned leads</h2>
+        <p class="hint">Leads that reached the system with a blank salesperson. Nobody owns these,
+          so nobody is working them. Largest quantity first.</p></div></div>
+      <div class="kpis" id="unKpis"></div>
+      <div class="panel"><div class="tw"><table id="tUnassigned"></table></div></div>
+    </section>
+
+    <!-- ══════════════ RECONCILIATION ══════════════ -->
+    <section id="v-recon" hidden>
+      <div class="top"><div><h2>Reconciliation</h2>
+        <p class="hint">Every row that entered the engine is accounted for here. If the control total
+          balances, nothing was silently dropped on the way to the numbers.</p></div></div>
+      <div class="panel">
+        <div id="balance"></div>
+        <div class="flow" id="flow"></div>
+      </div>
+      <div class="panel"><h3>Per file</h3>
+        <p class="sub">What was detected in each upload and how many rows survived each step.</p>
+        <div class="tw"><table id="tFiles"></table></div></div>
+      <div class="panel"><h3>Formats detected</h3>
+        <p class="sub">Matched against the profiles in <span class="mono">config/sources.json</span>.
+          To support a new export format, add a profile there — no code changes.</p>
+        <div class="tw"><table id="tSheets"></table></div></div>
+    </section>
+
+    <!-- ══════════════ EXCEPTIONS ══════════════ -->
+    <section id="v-exceptions" hidden>
+      <div class="top"><div><h2>Exception register</h2>
+        <p class="hint">Everything the engine found suspect, with the source row and a suggested fix.
+          These are the data problems costing you money.</p></div></div>
+      <div class="panel">
+        <div class="seg" id="exFilter" style="margin-bottom:12px"></div>
+        <div class="tw"><table id="tExceptions"></table></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ HISTORY ══════════════ -->
+    <section id="v-history" hidden>
+      <div class="top"><div><h2>History &amp; trend</h2>
+        <p class="hint">Every run is saved on this machine, so you can see whether the numbers are
+          moving in the right direction week on week.</p></div></div>
+      <div class="panel"><h3>Week on week</h3><div class="tw" style="margin-top:12px"><table id="tTrend"></table></div></div>
+      <div class="panel"><h3>Saved runs</h3><div id="runs"></div></div>
+    </section>
+  </main>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
