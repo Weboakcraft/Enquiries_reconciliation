@@ -1,0 +1,2716 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230e4a52'/><path d='M7 9h18l-7 8v7l-4 2v-9z' fill='%23b4762e'/></svg>">
+<title>Lead Reconciler</title>
+<style>
+/* OakCraft Lead Reconciler — the original app's design system, carried over
+   intact and extended for the hosted build. No webfonts: the numbers are the
+   subject here, and the system UI stack renders tabular figures cleanly. */
+:root{
+  --ink:#14181b; --ink-2:#33434a; --muted:#6c7a81; --faint:#95a3a9;
+  --ground:#eceff0; --surface:#fff; --surface-2:#f5f8f8; --line:#d6dee0; --line-2:#e7eded;
+  --petrol:#0e4a52; --petrol-2:#136069; --petrol-soft:#e0eced; --oak:#b4762e;
+  --pink:#b3325c; --pink-bg:#fbe4ec;
+  --s-new:#c77d0a; --s-con:#3d6e96; --s-qual:#17696f; --s-prop:#35507f;
+  --s-won:#12784a; --s-lost:#a6342c; --s-nq:#8a5a52;
+  --new-bg:#fbedd6; --won-bg:#dcf0e5; --lost-bg:#f8e2e0;
+  --sev-crit:#b3325c; --sev-high:#a6342c; --sev-med:#b26b00; --sev-low:#5b6b72;
+  --on-accent:#fff;
+  --shadow:0 1px 2px rgba(20,24,27,.06),0 10px 28px -20px rgba(20,24,27,.3);
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sidebar:232px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#e9eff0; --ink-2:#c1cdd1; --muted:#8ea0a6; --faint:#6d7d84;
+  --ground:#0f1315; --surface:#171d20; --surface-2:#1e2629; --line:#2b3639; --line-2:#232c30;
+  --petrol:#6fc0c9; --petrol-2:#8ad2da; --petrol-soft:#1a2e32; --oak:#d79a4e;
+  --pink:#f08ab0; --pink-bg:#361c27;
+  --s-new:#e0a03d; --s-con:#76a8cd; --s-qual:#4ba7ad; --s-prop:#7b94c9;
+  --s-won:#48b781; --s-lost:#e0766c; --s-nq:#c09a92;
+  --new-bg:#32270f; --won-bg:#112d21; --lost-bg:#321d1b;
+  --sev-crit:#f08ab0; --sev-high:#e0766c; --sev-med:#e0a03d; --sev-low:#8ea0a6;
+  --on-accent:#0d1315;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -20px rgba(0,0,0,.9);
+}}
+:root[data-theme="dark"]{
+  --ink:#e9eff0; --ink-2:#c1cdd1; --muted:#8ea0a6; --faint:#6d7d84;
+  --ground:#0f1315; --surface:#171d20; --surface-2:#1e2629; --line:#2b3639; --line-2:#232c30;
+  --petrol:#6fc0c9; --petrol-2:#8ad2da; --petrol-soft:#1a2e32; --oak:#d79a4e;
+  --pink:#f08ab0; --pink-bg:#361c27;
+  --s-new:#e0a03d; --s-con:#76a8cd; --s-qual:#4ba7ad; --s-prop:#7b94c9;
+  --s-won:#48b781; --s-lost:#e0766c; --s-nq:#c09a92;
+  --new-bg:#32270f; --won-bg:#112d21; --lost-bg:#321d1b;
+  --sev-crit:#f08ab0; --sev-high:#e0766c; --sev-med:#e0a03d; --sev-low:#8ea0a6;
+  --on-accent:#0d1315;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -20px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--ground);color:var(--ink);
+  font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;letter-spacing:-.015em;text-wrap:balance}
+button{font-family:inherit}
+a{color:var(--petrol)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted)}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--oak);outline-offset:2px}
+
+/* ---------------- shell ---------------- */
+.shell{display:flex;min-height:100%;align-items:flex-start}
+.side{width:var(--sidebar);flex:none;background:var(--surface);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;position:sticky;top:env(safe-area-inset-top,0px);
+  max-height:100dvh;align-self:stretch}
+.brand{padding:18px 18px 14px;border-bottom:1px solid var(--line-2);display:flex;gap:11px;align-items:flex-start}
+.brand .rail{width:4px;align-self:stretch;min-height:38px;background:var(--oak);border-radius:2px;flex:none}
+.brand h1{font-size:15px;font-weight:700;line-height:1.2}
+.brand .sub{font-size:11px;color:var(--muted);margin-top:2px}
+nav{padding:10px 10px 4px;overflow-y:auto;flex:1;min-height:0}
+nav .grp{margin:12px 8px 5px}
+nav button{display:flex;width:100%;align-items:center;gap:9px;background:none;border:0;
+  color:var(--ink-2);padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px;text-align:left}
+nav button:hover{background:var(--surface-2);color:var(--ink)}
+nav button[aria-current="true"]{background:var(--petrol);color:var(--on-accent);font-weight:600}
+nav button .n{margin-left:auto;font-family:var(--mono);font-size:10.5px;opacity:.75}
+nav button:disabled{opacity:.35;cursor:default}
+.side .foot{padding:12px 16px;border-top:1px solid var(--line-2);font-size:11px;color:var(--faint)}
+.side .foot b{color:var(--muted);font-weight:600}
+main{flex:1;min-width:0;padding:22px 26px 60px;max-width:1500px}
+.top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+.top h2{font-size:20px;font-weight:700}
+.top .hint{font-size:12.5px;color:var(--muted);max-width:76ch;margin-top:4px}
+
+/* ---------------- controls ---------------- */
+.btn{background:var(--petrol);color:var(--on-accent);border:0;border-radius:8px;padding:10px 18px;
+  font-size:13.5px;font-weight:600;cursor:pointer}
+.btn:hover:not(:disabled){background:var(--petrol-2)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line)}
+.btn.ghost:hover:not(:disabled){background:var(--surface-2);color:var(--ink)}
+.btn.sm{padding:6px 12px;font-size:12px;border-radius:6px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:8px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 13px;border-radius:6px;
+  cursor:pointer;font-family:var(--mono);font-size:11.5px;font-weight:500}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--petrol);color:var(--on-accent);font-weight:600}
+
+/* ---------------- upload ---------------- */
+.drop{border:2px dashed var(--line);border-radius:14px;background:var(--surface);
+  padding:44px 28px;text-align:center;transition:border-color .15s,background .15s}
+.drop.hot{border-color:var(--petrol);background:var(--petrol-soft)}
+.drop h3{font-size:17px;font-weight:700;margin-bottom:6px}
+.drop p{color:var(--muted);font-size:13px;max-width:62ch;margin:0 auto 18px}
+.drop .icon{width:44px;height:44px;margin:0 auto 14px;border-radius:11px;background:var(--petrol-soft);
+  display:grid;place-items:center;color:var(--petrol);font-size:21px}
+.flist{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+.frow{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);
+  border-radius:9px;padding:10px 13px}
+.frow .nm{font-weight:600;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frow .sz{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;flex:none}
+.frow .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:0 3px}
+.frow .x:hover{color:var(--s-lost)}
+.bar{height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:16px}
+.bar i{display:block;height:100%;background:var(--petrol);width:30%;border-radius:3px;
+  animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{0%{margin-left:-32%}100%{margin-left:100%}}
+.actions{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+
+/* ---------------- panels & kpis ---------------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:17px 18px 19px;box-shadow:var(--shadow);margin-bottom:12px;min-width:0}
+.panel h3{font-size:15.5px;font-weight:700}
+.panel .sub{font-size:12.5px;color:var(--muted);margin:5px 0 14px;max-width:80ch}
+.phead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr 1fr;align-items:start}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 15px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--petrol)}
+.kpi.warn::before{background:var(--s-new)} .kpi.good::before{background:var(--s-won)}
+.kpi.bad::before{background:var(--s-lost)} .kpi.crit::before{background:var(--pink)}
+.kpi .lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);line-height:1.35;min-height:26px}
+.kpi .num{font-size:28px;font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-top:5px;
+  font-variant-numeric:tabular-nums}
+.kpi .foot{font-size:11.5px;color:var(--muted);margin-top:3px}
+.kpi.warn .num{color:var(--s-new)} .kpi.good .num{color:var(--s-won)}
+.kpi.bad .num{color:var(--s-lost)} .kpi.crit .num{color:var(--pink)}
+
+/* ---------------- tables ---------------- */
+.tw{overflow-x:auto;min-width:0;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);text-align:right;padding:0 9px 8px;border-bottom:1.5px solid var(--line);
+  white-space:nowrap;vertical-align:bottom;position:sticky;top:0;background:var(--surface);z-index:1}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+td{padding:8px 9px;border-bottom:1px solid var(--line-2);text-align:right;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+td.l{text-align:left;white-space:normal}
+td.nm{font-weight:600;text-align:left}
+tbody tr:hover td{background:var(--surface-2)}
+tr.tot td{border-top:1.5px solid var(--line);font-weight:700;background:var(--surface-2)}
+tr.unass td{background:var(--pink-bg)}
+tr.unass td:first-child{color:var(--pink);font-weight:700;box-shadow:inset 3px 0 0 var(--pink)}
+tr.flag td{background:var(--lost-bg)}
+.hi{color:var(--s-lost);font-weight:700} .hi-g{color:var(--s-won);font-weight:700}
+.hi-a{color:var(--s-new);font-weight:700}
+
+/* ---------------- funnel & bars ---------------- */
+.fn{display:flex;flex-direction:column}
+.fn-row{display:grid;grid-template-columns:140px 1fr 96px;gap:12px;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--line-2)}
+.fn-row:last-child{border-bottom:0}
+.fn-name{font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:2.5px;flex:none}
+.trk{background:var(--surface-2);border-radius:4px;height:24px;overflow:hidden}
+.trk i{display:block;height:100%;border-radius:4px;min-width:3px;transition:width .4s ease}
+.fn-val{text-align:right;font-size:12.5px;white-space:nowrap}
+.fn-val b{font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.fn-val span{color:var(--muted);font-size:11px;font-family:var(--mono);margin-left:5px}
+.note{font-size:11.5px;color:var(--muted);margin-top:11px;padding-top:11px;border-top:1px solid var(--line-2)}
+.rep{padding:12px 0;border-bottom:1px solid var(--line-2)}
+.rep:last-child{border-bottom:0}
+.rhead{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+.rname{font-weight:700;font-size:14.5px}
+.rtot{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.rtot b{color:var(--ink)}
+.stack{display:flex;height:28px;border-radius:5px;overflow:hidden;background:var(--surface-2)}
+.stack i{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10.5px;
+  font-weight:600;color:#fff;overflow:hidden;transition:width .4s ease}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);
+  color:var(--ink-2);background:var(--surface-2);white-space:nowrap}
+.chip b{color:var(--ink)}
+.chip.bad{border-color:var(--s-lost);color:var(--s-lost);background:var(--lost-bg)}
+.chip.good{border-color:var(--s-won);color:var(--s-won);background:var(--won-bg)}
+.chip.warn{border-color:var(--s-new);color:var(--s-new);background:var(--new-bg)}
+.chip.bad b,.chip.good b,.chip.warn b{color:inherit}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line-2)}
+.lg{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.cols{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:7px;align-items:end;min-height:132px}
+.col{display:flex;flex-direction:column;align-items:center;gap:6px}
+.col i{width:100%;border-radius:4px 4px 2px 2px;background:var(--s-new);display:flex;justify-content:center;
+  padding-top:4px;font-family:var(--mono);font-size:11px;color:#fff;font-weight:600;min-height:18px}
+.col i.crit{background:var(--s-lost)}
+.col span{font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+/* ---------------- reconciliation & findings ---------------- */
+.balance{display:flex;gap:11px;align-items:center;padding:13px 16px;border-radius:10px;
+  border:1px solid var(--s-won);background:var(--won-bg);color:var(--s-won);font-weight:600;font-size:13.5px}
+.balance.off{border-color:var(--s-lost);background:var(--lost-bg);color:var(--s-lost)}
+.balance .tick{width:22px;height:22px;border-radius:50%;background:var(--s-won);color:#fff;
+  display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.balance.off .tick{background:var(--s-lost)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:13px}
+.step{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 13px;text-align:center;min-width:92px}
+.step .v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.step .k{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.step.minus .v{color:var(--s-lost)} .step.end{border-color:var(--petrol);background:var(--petrol-soft)}
+.step.end .v{color:var(--petrol)}
+.op{color:var(--muted);font-weight:700;padding:0 2px}
+.sev{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;color:var(--on-accent);white-space:nowrap}
+.sev.critical{background:var(--sev-crit)} .sev.high{background:var(--sev-high)}
+.sev.medium{background:var(--sev-med)} .sev.low{background:var(--sev-low)}
+.find{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-2)}
+.find:last-child{border-bottom:0}
+.find .n{font-size:16px;font-weight:800;color:var(--oak);font-variant-numeric:tabular-nums;min-width:24px}
+.find .t{font-size:13.5px;font-weight:600;line-height:1.45}
+.find .w{font-size:12.5px;color:var(--muted);margin-top:3px}
+.find .a{font-size:12.5px;margin-top:5px;padding-left:10px;border-left:2px solid var(--oak);color:var(--ink-2)}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty h3{font-size:15px;color:var(--ink);margin-bottom:5px}
+
+/* ---------------- history ---------------- */
+.runrow{display:flex;align-items:center;gap:13px;padding:11px 13px;border:1px solid var(--line);
+  border-radius:9px;background:var(--surface);margin-bottom:7px;flex-wrap:wrap}
+.runrow .p{font-weight:600;font-size:13px}
+.runrow .m{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.runrow .sp{margin-left:auto;display:flex;gap:7px}
+.delta{font-family:var(--mono);font-size:11px;font-weight:600}
+.delta.up{color:var(--s-won)} .delta.down{color:var(--s-lost)}
+.who{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.who .av{width:17px;height:17px;border-radius:50%;background:var(--petrol-soft);color:var(--petrol);
+  display:grid;place-items:center;font-size:9px;font-weight:700;flex:none;font-family:var(--sans)}
+
+/* ---------------- notices ---------------- */
+.toast{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  background:var(--s-lost);color:#fff;padding:12px 16px;border-radius:9px;font-size:13px;
+  box-shadow:var(--shadow);max-width:min(400px,calc(100vw - 36px));z-index:50}
+.toast.ok{background:var(--s-won)}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--line);background:var(--surface-2);font-size:12.5px;color:var(--ink-2);
+  margin-bottom:12px}
+.notice.sample{border-color:var(--oak);background:var(--new-bg);color:var(--s-new)}
+.notice.sample b{color:var(--s-new)}
+.notice .tag{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--oak);color:#fff;flex:none}
+.notice .sp{margin-left:auto;display:flex;gap:7px;flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.pill.live::before{background:var(--s-won)}
+.pill.local::before{background:var(--s-new)}
+
+@media (max-width:1100px){.g2{grid-template-columns:1fr}}
+@media (max-width:820px){
+  :root{--sidebar:0px}
+  .shell{flex-direction:column}
+  .side{width:auto;max-height:none;position:static;border-right:0;border-bottom:1px solid var(--line)}
+  nav{display:flex;gap:5px;overflow-x:auto;padding:9px 16px}
+  nav button{width:auto;white-space:nowrap}
+  nav .grp,.side .foot{display:none}
+  .brand{padding:16px 16px 12px}
+  main{padding:16px 16px 44px}
+  .fn-row{grid-template-columns:1fr;gap:5px}
+  .fn-val{text-align:left}
+  .runrow .sp{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <div class="rail"></div>
+      <div>
+        <h1>Lead Reconciler</h1>
+        <div class="sub">OakCraft Sales MIS</div>
+      </div>
+    </div>
+    <nav id="nav">
+      <div class="grp eyebrow">Start</div>
+      <button data-view="upload" aria-current="true">Upload &amp; run</button>
+      <div class="grp eyebrow">Results</div>
+      <button data-view="overview" disabled>Overview</button>
+      <button data-view="master" disabled>Master report</button>
+      <button data-view="people" disabled>Employees</button>
+      <button data-view="sources" disabled>Sources &amp; quality</button>
+      <button data-view="demand" disabled>Demand &amp; loss</button>
+      <button data-view="unassigned" disabled>Unassigned<span class="n" id="navUn"></span></button>
+      <div class="grp eyebrow">Audit</div>
+      <button data-view="recon" disabled>Reconciliation</button>
+      <button data-view="exceptions" disabled>Exceptions<span class="n" id="navEx"></span></button>
+      <div class="grp eyebrow">Over time</div>
+      <button data-view="history">History &amp; trend</button>
+    </nav>
+    <div class="foot">
+      <span class="pill" id="storePill">Checking storage</span><br>
+      <span id="runLabel">No run loaded</span>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ══════════════ UPLOAD ══════════════ -->
+    <section id="v-upload">
+      <div class="top"><div>
+        <h2>Upload your reports</h2>
+        <p class="hint">Drop the IndiaMART, JustDial and Meta exports in together. The format of each
+          sheet is detected automatically, the three are reconciled into one register, and every
+          figure is produced from that. The files are read in this browser — the spreadsheets
+          themselves are never uploaded anywhere.</p>
+      </div></div>
+
+      <div class="drop" id="drop">
+        <div class="icon" aria-hidden="true">&#8682;</div>
+        <h3>Drag your Excel files here</h3>
+        <p>Or click to browse. Accepts .xlsx, .xlsm and .xls — up to 40 MB per file.
+           You can upload one file or all of them at once.</p>
+        <button class="btn" id="browse" type="button">Choose files</button>
+        <input type="file" id="file" multiple accept=".xlsx,.xlsm,.xls" hidden>
+      </div>
+
+      <div class="flist" id="flist"></div>
+
+      <div class="actions">
+        <button class="btn" id="run" disabled>Run reconciliation</button>
+        <button class="btn ghost" id="demo" type="button">See it with a sample week</button>
+        <button class="btn ghost sm" id="clear" hidden>Clear</button>
+        <span class="eyebrow" id="status"></span>
+      </div>
+      <div class="bar" id="prog" hidden><i></i></div>
+
+      <div class="panel" id="recentWrap" style="margin-top:20px" hidden>
+        <div class="phead"><h3>Recent runs</h3></div>
+        <p class="sub">Open a previous week without re-uploading anything.</p>
+        <div id="recent"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ OVERVIEW ══════════════ -->
+    <section id="v-overview" hidden>
+      <div class="top"><div><h2>Overview</h2><p class="hint" id="ovPeriod"></p></div>
+        <div style="display:flex;gap:8px"><button class="btn sm dl">Download Excel report</button></div></div>
+      <div class="notice sample" id="sampleBanner" hidden>
+        <span class="tag">Sample</span>
+        <div>You are looking at a <b>generated example week</b>, not OakCraft's real data.
+          It is here so you can see every screen working. Upload your own exports to replace it —
+          nothing on this screen is saved to the team's history.</div>
+        <div class="sp"><button class="btn ghost sm" id="dropSample">Clear sample</button></div>
+      </div>
+      <div class="kpis" id="ovKpis"></div>
+      <div class="grid g2">
+        <div class="panel">
+          <div class="phead"><h3>Where the leads are sitting</h3><span class="eyebrow" id="fnScope">All sources</span></div>
+          <p class="sub">Every source uses different words for the same thing. All of them are mapped
+            onto the one funnel below, so the columns actually add up.</p>
+          <div class="seg" id="srcFilter" style="margin-bottom:12px"></div>
+          <div class="fn" id="funnel"></div>
+          <div class="note" id="fnNote"></div>
+        </div>
+        <div class="panel">
+          <div class="phead"><h3>Untouched ageing</h3><span class="eyebrow" id="asof"></span></div>
+          <p class="sub">How long leads nobody has worked have been sitting. Red bars are 2 days or older.</p>
+          <div class="cols" id="ageing"></div>
+          <div class="note" id="ageNote"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="phead"><h3>What the data is telling you</h3><span class="eyebrow">Ranked by cost to the business</span></div>
+        <div id="insights"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MASTER REPORT ══════════════ -->
+    <section id="v-master" hidden>
+      <div class="top"><div><h2>Master report</h2>
+        <p class="hint">The same four blocks as your standard weekly format — employee wise, source wise,
+          stage wise and lead quality. This is what the Excel download contains.</p></div>
+        <button class="btn sm dl">Download Excel report</button></div>
+      <div class="panel"><div class="phead"><h3>Employee wise snapshot</h3><span class="eyebrow" id="mrPeriod"></span></div>
+        <div class="tw"><table id="tEmp"></table></div></div>
+      <div class="grid g2">
+        <div class="panel"><h3>Source wise snapshot</h3><div class="tw" style="margin-top:12px"><table id="tSrc"></table></div></div>
+        <div class="panel"><h3>Stage wise snapshot</h3><div class="tw" style="margin-top:12px"><table id="tStage"></table></div></div>
+      </div>
+      <div class="panel"><h3>Lead quality snapshot</h3>
+        <p class="sub">Taken from the Lead's Quality column. Feeds that carry no rating show as Not Rated.</p>
+        <div class="tw"><table id="tQual"></table></div></div>
+    </section>
+
+    <!-- ══════════════ PEOPLE ══════════════ -->
+    <section id="v-people" hidden>
+      <div class="top"><div><h2>Employees</h2>
+        <p class="hint">Each bar is that person's own 100%. Amber is work not started, the blue-green band
+          is live pipeline, green is won, red is closed without an order.</p></div></div>
+      <div class="panel">
+        <div class="phead"><h3>Stage split</h3><span class="eyebrow" id="peopleScope">All sources</span></div>
+        <div class="seg" id="srcFilter2" style="margin:10px 0 14px"></div>
+        <div id="reps"></div><div class="legend" id="legend"></div>
+      </div>
+      <div class="panel"><h3>Conversion scorecard</h3>
+        <p class="sub">Conversion % is Won ÷ leads assigned. Qualification rate is the fairer weekly
+          measure, because a B2B order rarely closes inside seven days.</p>
+        <div class="tw"><table id="tScore"></table></div></div>
+    </section>
+
+    <!-- ══════════════ SOURCES ══════════════ -->
+    <section id="v-sources" hidden>
+      <div class="top"><div><h2>Sources &amp; lead quality</h2>
+        <p class="hint">Which feed is actually worth the money — by qualification rate, by pieces of
+          demand, and by how many hot leads it produces.</p></div></div>
+      <div class="panel"><h3>Source performance</h3><div class="tw" style="margin-top:12px"><table id="tSrcPerf"></table></div></div>
+      <div class="grid g2">
+        <div class="panel"><h3>Platform detail</h3>
+          <p class="sub">Where a feed reports its own sub-channel.</p>
+          <div class="tw"><table id="tDetail"></table></div></div>
+        <div class="panel"><h3>Lead quality mix</h3>
+          <div class="tw" style="margin-top:12px"><table id="tQual2"></table></div></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ DEMAND ══════════════ -->
+    <section id="v-demand" hidden>
+      <div class="top"><div><h2>Demand &amp; loss</h2>
+        <p class="hint">Counting leads hides the size of what was lost. This view counts pieces.</p></div></div>
+      <div class="kpis" id="demKpis"></div>
+      <div class="grid g2">
+        <div class="panel"><h3>Why that demand was lost</h3>
+          <p class="sub">Rows shaded amber are range or interest problems, not dead leads.</p>
+          <div class="tw"><table id="tDemand"></table></div></div>
+        <div class="panel"><h3>Every disposition</h3>
+          <p class="sub">All leads closed without an order, by the reason a rep recorded.</p>
+          <div class="tw"><table id="tDisp"></table></div></div>
+      </div>
+      <div class="panel"><h3>Worth chasing again</h3>
+        <p class="sub">Closed without an order, but either rated hot/warm, asking for 10+ pieces, or
+          carrying a note that records live interest.</p>
+        <div class="tw"><table id="tRecover"></table></div></div>
+    </section>
+
+    <!-- ══════════════ UNASSIGNED ══════════════ -->
+    <section id="v-unassigned" hidden>
+      <div class="top"><div><h2>Unassigned leads</h2>
+        <p class="hint">Leads that reached the system with a blank salesperson. Nobody owns these,
+          so nobody is working them. Largest quantity first.</p></div></div>
+      <div class="kpis" id="unKpis"></div>
+      <div class="panel"><div class="tw"><table id="tUnassigned"></table></div></div>
+    </section>
+
+    <!-- ══════════════ RECONCILIATION ══════════════ -->
+    <section id="v-recon" hidden>
+      <div class="top"><div><h2>Reconciliation</h2>
+        <p class="hint">Every row that entered the engine is accounted for here. If the control total
+          balances, nothing was silently dropped on the way to the numbers.</p></div></div>
+      <div class="panel">
+        <div id="balance"></div>
+        <div class="flow" id="flow"></div>
+      </div>
+      <div class="panel"><h3>Per file</h3>
+        <p class="sub">What was detected in each upload and how many rows survived each step.</p>
+        <div class="tw"><table id="tFiles"></table></div></div>
+      <div class="panel"><h3>Formats detected</h3>
+        <p class="sub">Matched against the source profiles built into this app. A new export format is
+          supported by adding a profile — the matching rules are data, not code.</p>
+        <div class="tw"><table id="tSheets"></table></div></div>
+    </section>
+
+    <!-- ══════════════ EXCEPTIONS ══════════════ -->
+    <section id="v-exceptions" hidden>
+      <div class="top"><div><h2>Exception register</h2>
+        <p class="hint">Everything the engine found suspect, with the source row and a suggested fix.
+          These are the data problems costing you money.</p></div></div>
+      <div class="panel">
+        <div class="seg" id="exFilter" style="margin-bottom:12px"></div>
+        <div class="tw"><table id="tExceptions"></table></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ HISTORY ══════════════ -->
+    <section id="v-history" hidden>
+      <div class="top"><div><h2>History &amp; trend</h2>
+        <p class="hint" id="histHint">Every run is saved, so you can see whether the numbers are moving
+          in the right direction week on week.</p></div></div>
+      <div class="panel"><h3>Week on week</h3><div class="tw" style="margin-top:12px"><table id="tTrend"></table></div></div>
+      <div class="panel"><h3>Saved runs</h3><div id="runs"></div></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>window.OAK_CONFIG={"_comment":"Source profiles. To support a NEW export format, add a profile here — no Python changes needed.","canonical":{"stages":["New","Contacted","Qualified","Quoted / Proposal","Won","Lost","Not Qualified"],"open_stages":["New","Contacted","Qualified","Quoted / Proposal"],"closed_no_order":["Lost","Not Qualified"],"won_stage":"Won","untouched_stage":"New","qualities":["Hot Lead","Warm Lead","Cold Lead","Don't Pick Call","Not Interested","Not Rated"],"unassigned_label":"(UNASSIGNED)"},"rep_aliases":{"_comment":"Left side is matched case-insensitively after trimming. Use this when one person appears under two spellings.","ujala rajput":"Ujala Rajput","amira saikh":"Amira Saikh","amira sheikh":"Amira Saikh","mayank mittal":"Mayank Mittal","niti kumari":"Niti Kumari"},"quality_rules":[{"contains":"hot","value":"Hot Lead"},{"contains":"warm","value":"Warm Lead"},{"contains":"cold","value":"Cold Lead"},{"contains":"pick","value":"Don't Pick Call"},{"contains":"interest","value":"Not Interested"}],"null_tokens":["","0","00","-","na","n/a","none","null","nil","#n/a"],"placeholder_names":{"_comment":"Generic names that many different buyers share in these exports. Never treat two rows as the same lead just because they carry one of these.","values":["jd buyer","justdial buyer","buyer","buyer call","customer","india mart buyer","indiamart buyer","test","asdf","abc","xyz","na","unknown","new enquiry"]},"disposition_rules":[{"id":"invalid","label":"Invalid / fake lead","any_regex":"fake|vaild|invalid"},{"id":"no_req","label":"No requirement","any_regex":"\\bnot\\s*requ|\\bno\\s*requ"},{"id":"price","label":"Price / budget mismatch","any_regex":"low price|cheap|budget|(price.*requir)"},{"id":"live_req","label":"Had a live requirement - lost anyway","any_regex":"requir|requr","severity":"recoverable"},{"id":"callback","label":"Callback committed, never done","any_regex":"call ?back","severity":"recoverable"},{"id":"no_resp_cat","label":"No response (catalogue shared)","all_regex":["not pick|nopt pick|not pink|call cut","catalog|catalou"]},{"id":"no_resp","label":"No response / call not picked","any_regex":"not pick|nopt pick|not pink|call cut"},{"id":"catalogue","label":"Catalogue shared, no closure","any_regex":"catalog|catalou","severity":"recoverable"},{"id":"too_small","label":"Order too small (single piece)","any_regex":"one chair|only\\s*1\\s*pec|1\\s*pec"},{"id":"range","label":"Product / range mismatch","any_regex":"plastec|plastic|plastecki|workstoson|geeken|godrej|featherlite|import|hotal|hotel|spare|parts|brand","severity":"product"},{"id":"logistics","label":"Location / logistics objection","any_regex":"delhi base|dont want to deal|local|near by"}],"profiles":[{"id":"meta","label":"Meta Ads","match":{"required":["lead_status","assigned_to"],"any":["created_time_ist","platform","full_name"]},"source_name":{"const":"Meta","sub_column":"platform","sub_map":{"ig":"Instagram","fb":"Facebook"}},"fields":{"date":{"from":["created_time_ist"],"formats":["%d-%m-%Y %H:%M:%S","%Y-%m-%d %H:%M:%S","%d/%m/%Y %H:%M:%S"]},"rep":{"from":["assigned_to"]},"customer":{"from":["full_name"]},"phone":{"from":["phone_number"]},"city":{"from":["city_state"]},"product":{"from":[]},"qty":{"from":[]},"note":{"from":[]}},"stage":{"from":["lead_status"],"map":{"CREATED":"New","NEW":"New","CONTACTED":"Contacted","QUALIFIED":"Qualified","PROPOSAL":"Quoted / Proposal","QUOTED":"Quoted / Proposal","WON":"Won","LOST":"Lost","NOT QUALIFIED":"Not Qualified"},"blank":"New"},"quality":{"from":[],"blank":"Not Rated"}},{"id":"justdial_workflow","label":"JustDial / enquiry workflow","match":{"required":["Stage","Salesperson"],"any":["Enquiry Id","Product","Source"]},"source_name":{"column":"Source","normalize":{"india":"IndiaMart","just":"JustDial","meta":"Meta"},"default":"JustDial"},"fields":{"date":{"from":["Date","Enquiry Time"]},"rep":{"from":["Salesperson"]},"customer":{"from":["Customer"]},"phone":{"from":["Mobile","Phone"]},"city":{"from":["City"]},"product":{"from":["Product"]},"qty":{"from":["Qty","Quantity"]},"note":{"from":["DISCUSSION","Note","Final Remark's"]}},"stage":{"from":["Stage"],"map":{"NEW":"New","CONTACTED":"Contacted","QUALIFIED":"Qualified","PROPOSAL":"Quoted / Proposal","QUOTED":"Quoted / Proposal","WON":"Won","LOST":"Lost","NOT QUALIFIED":"Not Qualified"},"blank":"New"},"quality":{"from":["Lead's Quality"],"blank":"Not Rated"}},{"id":"indiamart_workflow","label":"IndiaMART workflow","match":{"required":["Assigned Salesperson","Qualification Status"],"any":["Lead's Quality","Buyer Name","Timestamp"]},"source_name":{"const":"IndiaMart"},"fields":{"date":{"from":["Timestamp","Date"]},"rep":{"from":["Assigned Salesperson"]},"customer":{"from":["Buyer Name","Company Name"]},"phone":{"from":["Mobile Number","Mobile"]},"city":{"from":["City/ Location","CITY","City"]},"product":{"from":["Subject","Product / Requirement"]},"qty":{"from":["Quantity","QTY NEED"]},"note":{"from":["DISCUSSION","Final Remark's"]}},"stage":{"from":["Qualification Status"],"map":{"QUALIFIED":"Qualified","NOT QUALIFIED":"Not Qualified","LOST":"Lost","WON":"Won"},"blank":"New"},"quality":{"from":["Lead's Quality"],"blank":"Not Rated"}}]};</script>
+<script>/* ===========================================================================
+   OakCraft Lead Reconciler — reconciliation engine, browser edition.
+
+   A faithful port of core/ingest.py, core/reconcile.py and core/metrics.py.
+   No DOM, no network: give it workbook matrices and a config, get the same
+   JSON structure the Flask API used to return. Runs in the browser and in
+   Node (used by the test harness that diffs it against the Python original).
+   =========================================================================== */
+(function (root) {
+"use strict";
+
+const MAX_HEADER_SCAN = 8;   // how many top rows to try as the header row
+const MAX_PROBE_COLS  = 80;  // ignore the long tail of empty columns Excel leaves
+
+/* ------------------------------------------------------------------ utils */
+
+const isStr = v => typeof v === "string";
+const isDate = v => v instanceof Date && !isNaN(v);
+
+function normKey(s) {
+  return (s === null || s === undefined) ? "" : String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Python str() for the value kinds a spreadsheet cell can hold. */
+function pyStr(v) {
+  if (v === null || v === undefined) return "None";
+  if (isDate(v)) {
+    const p = n => String(n).padStart(2, "0");
+    const t = `${p(v.getHours())}:${p(v.getMinutes())}:${p(v.getSeconds())}`;
+    return `${v.getFullYear()}-${p(v.getMonth() + 1)}-${p(v.getDate())} ${t}`;
+  }
+  if (typeof v === "boolean") return v ? "True" : "False";
+  return String(v);
+}
+
+function clean(v, nullTokens) {
+  if (v === null || v === undefined) return "";
+  const s = pyStr(v).replace(/\s+/g, " ").trim();
+  return nullTokens.indexOf(s.toLowerCase()) >= 0 ? "" : s;
+}
+
+function toInt(v) {
+  if (v === null || v === undefined) return 0;
+  const raw = pyStr(v).trim();
+  if (raw === "") return 0;
+  const f = Number(raw);
+  if (!isFinite(f)) return 0;
+  const n = Math.trunc(f);
+  return (n > 0 && n < 1000000) ? n : 0;
+}
+
+/** Python str.title() for ASCII: a letter following a non-letter is upper. */
+function pyTitle(s) {
+  let out = "", prevCased = false;
+  for (const ch of s) {
+    const cased = /[A-Za-z]/.test(ch);
+    out += cased ? (prevCased ? ch.toLowerCase() : ch.toUpperCase()) : ch;
+    prevCased = cased;
+  }
+  return out;
+}
+
+/* Date handling ------------------------------------------------------------
+   Dates are carried as {y, m, d} triples so nothing depends on a timezone. */
+
+const DEFAULT_FORMATS = ["%d-%m-%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S",
+                         "%d-%m-%Y", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"];
+
+const FMT_PARTS = { "%d": "(\\d{1,2})", "%m": "(\\d{1,2})", "%Y": "(\\d{4})",
+                    "%H": "(\\d{1,2})", "%M": "(\\d{1,2})", "%S": "(\\d{1,2})" };
+
+function strptime(s, fmt) {
+  const order = [];
+  let pattern = "";
+  for (let i = 0; i < fmt.length; i++) {
+    if (fmt[i] === "%" && FMT_PARTS[fmt.slice(i, i + 2)]) {
+      order.push(fmt.slice(i, i + 2));
+      pattern += FMT_PARTS[fmt.slice(i, i + 2)];
+      i++;
+    } else {
+      pattern += fmt[i].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  const m = new RegExp("^" + pattern + "$").exec(s);
+  if (!m) return null;
+  const got = {};
+  order.forEach((k, i) => { got[k] = parseInt(m[i + 1], 10); });
+  const y = got["%Y"], mo = got["%m"], d = got["%d"];
+  if (y === undefined || mo === undefined || d === undefined) return null;
+  if (mo < 1 || mo > 12 || d < 1) return null;
+  if (d > new Date(y, mo, 0).getDate()) return null;            // real month length
+  if ((got["%H"] ?? 0) > 23 || (got["%M"] ?? 0) > 59 || (got["%S"] ?? 0) > 59) return null;
+  return { y: y, m: mo, d: d };
+}
+
+function parseDate(v, formats) {
+  if (v === null || v === undefined) return null;
+  if (isStr(v) && !v.trim()) return null;
+  if (isDate(v)) return { y: v.getFullYear(), m: v.getMonth() + 1, d: v.getDate() };
+  const s = pyStr(v).trim();
+  for (const f of (formats || []).concat(DEFAULT_FORMATS)) {
+    const hit = strptime(s, f);
+    if (hit) return hit;
+  }
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m) {
+    const y = +m[1], mo = +m[2], d = +m[3];
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= new Date(y, mo, 0).getDate()) return { y, m: mo, d };
+  }
+  return null;
+}
+
+const iso = dd => `${dd.y}-${String(dd.m).padStart(2, "0")}-${String(dd.d).padStart(2, "0")}`;
+const fromISO = s => ({ y: +s.slice(0, 4), m: +s.slice(5, 7), d: +s.slice(8, 10) });
+const dayNum = dd => Math.floor(Date.UTC(dd.y, dd.m - 1, dd.d) / 86400000);
+const fromDayNum = n => { const t = new Date(n * 86400000);
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() }; };
+const addDays = (dd, k) => fromDayNum(dayNum(dd) + k);
+const isoAddDays = (s, k) => iso(addDays(fromISO(s), k));
+const diffDays = (a, b) => dayNum(fromISO(a)) - dayNum(fromISO(b));
+const WEEKDAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const weekdayOf = s => WEEKDAY[((dayNum(fromISO(s)) % 7) + 7 + 3) % 7];   // 1970-01-01 = Thu
+
+/* Percentages ---------------------------------------------------------------
+   Python's round() breaks ties to even. Computing on the exact integer
+   ratio rather than a float keeps the JS numbers identical to the Python. */
+function pct(a, b) {
+  if (!b) return 0.0;
+  const neg = (a < 0) !== (b < 0);
+  const N = 10000 * Math.abs(a), D = Math.abs(b);
+  let q = Math.floor(N / D);
+  const r = N - q * D;
+  if (2 * r > D || (2 * r === D && q % 2 !== 0)) q += 1;
+  return (neg ? -q : q) / 100;
+}
+
+/* Number grouping for the generated findings text. The reports are read in
+   India, so the whole app groups the Indian way (12,34,567). */
+const grp = x => Number(x || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+
+/* Python's repr of a float always shows a decimal point: 30.0, not 30. */
+const pyf = v => Number.isInteger(v) ? v.toFixed(1) : String(v);
+
+/* ------------------------------------------------------------ detection */
+
+function headerCandidates(rows) {
+  const out = [];
+  const last = Math.min(MAX_HEADER_SCAN, rows.length);
+  for (let r = 1; r <= last; r++) {
+    const row = rows[r - 1].slice(0, MAX_PROBE_COLS);
+    let n = 0;
+    for (const v of row) if (isStr(v) && v.trim()) n++;
+    if (n >= 3) out.push([r, row]);
+  }
+  return out;
+}
+
+function scoreProfile(profile, headers) {
+  const keys = new Set();
+  for (const h of headers) if (h !== null && h !== undefined) keys.add(normKey(h));
+  const req = profile.match.required.map(normKey);
+  const anyc = (profile.match.any || []).map(normKey);
+  if (!req.length || !req.every(k => keys.has(k))) return 0.0;
+  if (anyc.length && !anyc.some(k => keys.has(k))) return 0.5;
+  return 1.0;
+}
+
+/** sheets: [{name, rows}] — rows are raw cell matrices. */
+function detectSheets(sheets, cfg) {
+  const results = [];
+  for (const sh of sheets) {
+    let best = null;
+    const cands = headerCandidates(sh.rows);
+    for (const [headerRow, headers] of cands) {
+      for (const prof of cfg.profiles) {
+        const s = scoreProfile(prof, headers);
+        if (s >= 1.0 && (best === null || s > best.score)) {
+          best = { sheet: sh.name, profile: prof, header_row: headerRow,
+                   headers: headers.filter(h => h !== null && h !== undefined), score: s };
+        }
+      }
+      if (best) break;
+    }
+    if (best) results.push(best);
+    else results.push({ sheet: sh.name, profile: null, header_row: null,
+                        headers: (cands.length ? cands[0][1] : []).filter(h => h !== null && h !== undefined),
+                        score: 0.0 });
+  }
+  return results;
+}
+
+/* ------------------------------------------------- field resolution */
+
+function RowReader(headers) {
+  const index = new Map();
+  headers.forEach((h, i) => { const k = normKey(h); if (k && !index.has(k)) index.set(k, i); });
+  return {
+    headers,
+    get(row, names) {
+      for (const n of (names || [])) {
+        const i = index.get(normKey(n));
+        if (i !== undefined && i < row.length) {
+          const v = row[i];
+          if (v !== null && v !== undefined && pyStr(v).trim() !== "") return v;
+        }
+      }
+      return null;
+    },
+    has(name) { return index.has(normKey(name)); },
+  };
+}
+
+function mapQuality(raw, cfg, blank) {
+  const s = (raw || "").toLowerCase();
+  if (!s) return blank;
+  for (const rule of cfg.quality_rules) if (s.indexOf(rule.contains) >= 0) return rule.value;
+  return blank;
+}
+
+function mapStage(raw, stageCfg, canonical) {
+  const s = (raw || "").trim();
+  if (!s) return [stageCfg.blank || "New", true];
+  const m = {};
+  for (const [k, v] of Object.entries(stageCfg.map || {})) m[k.toUpperCase()] = v;
+  if (s.toUpperCase() in m) return [m[s.toUpperCase()], true];
+  for (const c of canonical) if (s.toLowerCase() === c.toLowerCase()) return [c, true];
+  return [stageCfg.blank || "New", false];
+}
+
+function resolveRep(raw, cfg) {
+  const s = String(raw === null || raw === undefined ? "" : pyStr(raw)).replace(/\s+/g, " ").trim();
+  if (!s) return cfg.canonical.unassigned_label;
+  const hit = (cfg.rep_aliases || {})[s.toLowerCase()];
+  return hit ? hit : pyTitle(s);
+}
+
+const reCache = new Map();
+const rx = p => { if (!reCache.has(p)) reCache.set(p, new RegExp(p)); return reCache.get(p); };
+
+function classifyDisposition(note, quality, stage, cfg) {
+  const d = (note || "").replace(/\s+/g, " ").trim().toLowerCase();
+  const q = (quality || "").toLowerCase();
+  for (const rule of cfg.disposition_rules) {
+    if (rule.all_regex) {
+      if (rule.all_regex.every(p => rx(p).test(d)))
+        return { id: rule.id, label: rule.label, severity: rule.severity || "normal" };
+    } else if (rx(rule.any_regex).test(d)) {
+      return { id: rule.id, label: rule.label, severity: rule.severity || "normal" };
+    }
+  }
+  if (!d) {
+    if (q.indexOf("interest") >= 0) return { id: "no_req", label: "No requirement", severity: "normal" };
+    if (q.indexOf("pick") >= 0) return { id: "no_resp", label: "No response / call not picked", severity: "normal" };
+  }
+  if (cfg.canonical.closed_no_order.indexOf(stage) >= 0)
+    return { id: "not_logged", label: "Reason not logged", severity: "gap" };
+  return { id: "none", label: "Not applicable", severity: "normal" };
+}
+
+/* ------------------------------------------------------------ read a file */
+
+function readFile(sheets, filename, cfg) {
+  const nulls = cfg.null_tokens.map(t => t.toLowerCase());
+  const canonical = cfg.canonical.stages;
+  const detections = detectSheets(sheets, cfg);
+  const byName = new Map(sheets.map(s => [s.name, s]));
+
+  const leads = [], sheetInfo = [], unmapped = [];
+  let rowsRead = 0, rowsBlank = 0;
+
+  for (const det of detections) {
+    if (det.profile === null) {
+      sheetInfo.push({ file: filename, sheet: det.sheet, profile: null, label: "not recognised",
+                       rows: 0, headers: det.headers.slice(0, 25).map(String) });
+      continue;
+    }
+    const prof = det.profile, src = byName.get(det.sheet);
+    const rr = RowReader(det.headers);
+    const f = prof.fields, sn = prof.source_name || {};
+    const width = det.headers.length;
+    let nSheet = 0;
+
+    for (let i = det.header_row; i < src.rows.length; i++) {
+      const excelRow = i + 1;
+      const row = [];
+      for (let c = 0; c < width; c++) row.push(c < src.rows[i].length ? src.rows[i][c] : null);
+      rowsRead++;
+      if (!row.some(c => c !== null && c !== undefined && pyStr(c).trim() !== "")) { rowsBlank++; continue; }
+
+      // ---- source name
+      let source, sourceDetail;
+      if ("const" in sn) {
+        source = sn.const;
+        if (sn.sub_column && rr.has(sn.sub_column)) {
+          const sub = clean(rr.get(row, [sn.sub_column]), nulls).toLowerCase();
+          sourceDetail = (sn.sub_map || {})[sub] !== undefined ? sn.sub_map[sub] : (pyTitle(sub) || source);
+        } else sourceDetail = source;
+      } else {
+        const rawSrc = clean(rr.get(row, [sn.column || ""]), nulls);
+        source = sn.default || "Unknown";
+        for (const [frag, name] of Object.entries(sn.normalize || {})) {
+          if (rawSrc.toLowerCase().indexOf(frag) >= 0) { source = name; break; }
+        }
+        sourceDetail = source;
+      }
+
+      const rawStage = clean(rr.get(row, prof.stage.from), nulls);
+      const [stage, ok] = mapStage(rawStage, prof.stage, canonical);
+      if (!ok) unmapped.push({ file: filename, sheet: det.sheet, row: excelRow,
+                               value: rawStage, field: prof.stage.from[0] });
+
+      const rawQuality = clean(rr.get(row, prof.quality.from), nulls);
+      const quality = mapQuality(rawQuality, cfg, prof.quality.blank || "Not Rated");
+      const note = clean(rr.get(row, f.note.from), nulls);
+      const qtyRaw = rr.get(row, f.qty.from);
+      const qty = toInt(qtyRaw);
+      const qtyDefect = !!(f.qty.from.length && qty === 0 && qtyRaw !== null && qtyRaw !== undefined &&
+                           ["null", "none", "n/a", "-"].indexOf(pyStr(qtyRaw).trim().toLowerCase()) >= 0);
+
+      const date = parseDate(rr.get(row, f.date.from), f.date.formats || []);
+      const rep = resolveRep(rr.get(row, f.rep.from), cfg);
+      const phoneRaw = rr.get(row, f.phone.from);
+
+      leads.push({
+        src_file: filename, src_sheet: det.sheet, src_row: excelRow,
+        profile: prof.id, source, source_detail: sourceDetail,
+        date: date ? iso(date) : null,
+        rep, assigned: rep !== cfg.canonical.unassigned_label,
+        customer: clean(rr.get(row, f.customer.from), nulls),
+        phone: pyStr(phoneRaw === null || phoneRaw === undefined || phoneRaw === "" ? "" : phoneRaw)
+                 .replace(/\D/g, "").slice(-10),
+        city: clean(rr.get(row, f.city.from), nulls),
+        product: clean(rr.get(row, f.product.from), nulls).slice(0, 80),
+        qty, qty_defect: qtyDefect,
+        stage, raw_stage: rawStage,
+        quality, raw_quality: rawQuality,
+        note,
+        disposition: classifyDisposition(note, quality, stage, cfg),
+      });
+      nSheet++;
+    }
+
+    sheetInfo.push({ file: filename, sheet: det.sheet, profile: prof.id, label: prof.label,
+                     rows: nSheet, headers: det.headers.slice(0, 25).map(String) });
+  }
+
+  return { leads, sheets: sheetInfo, rows_read: rowsRead, rows_blank: rowsBlank,
+           unmapped_stage_values: unmapped };
+}
+
+/* ========================================================= reconciliation */
+
+const normName = s => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+function inferPeriod(leads) {
+  const ds = leads.map(l => l.date).filter(Boolean).sort();
+  if (!ds.length) {
+    const t = new Date();
+    const today = { y: t.getFullYear(), m: t.getMonth() + 1, d: t.getDate() };
+    return [iso(addDays(today, -6)), iso(today)];
+  }
+  const end = ds[ds.length - 1];
+  return [isoAddDays(end, -6), end];
+}
+
+function reconcile(files, cfg, period) {
+  const unassignedLabel = cfg.canonical.unassigned_label;
+  const allLeads = [];
+  for (const f of files) allLeads.push(...f.leads);
+
+  const [pStart, pEnd] = period || inferPeriod(allLeads);
+  const exceptions = [];
+
+  const ex = (kind, severity, message, detail, lead, fix) => exceptions.push({
+    kind, severity, message, detail: detail || "", fix: fix || "",
+    ref: lead ? `${lead.src_file} · ${lead.src_sheet} · row ${lead.src_row}` : "",
+    customer: lead ? (lead.customer || "") : "",
+  });
+
+  // ------------------------------------------------------ 1. period filter
+  const inPeriod = [], outPeriod = [], noDate = [];
+  for (const l of allLeads) {
+    if (!l.date) {
+      noDate.push(l);
+      ex("no_date", "high", "Row has no usable date and was excluded",
+         `customer "${l.customer || "(blank)"}"`, l, "Check the date column format in the export");
+    } else if (pStart <= l.date && l.date <= pEnd) {
+      inPeriod.push(l);
+    } else {
+      outPeriod.push(l);
+      ex("out_of_period", "low",
+         `Row dated ${l.date} is outside the ${pStart} to ${pEnd} window`,
+         `${l.source} · ${l.customer || "(blank)"}`, l, "Filter the export to the reporting week");
+    }
+  }
+
+  // ------------------------------------------------------ 2. duplicates
+  const keep = [], dropped = [];
+  const seenPhone = new Map(), seenName = new Map();
+  const placeholders = new Set((cfg.placeholder_names?.values || []).map(p => p.toLowerCase()));
+
+  const ordered = inPeriod.slice().sort((a, b) =>
+    (a.date < b.date ? -1 : a.date > b.date ? 1 :
+     a.src_file < b.src_file ? -1 : a.src_file > b.src_file ? 1 :
+     a.src_row - b.src_row));
+
+  for (const l of ordered) {
+    const ph = l.phone;
+    const dupOf = (ph && ph.length === 10) ? seenPhone.get(ph) : undefined;
+
+    if (dupOf !== undefined) {
+      l._dup_of = `${dupOf.src_file} row ${dupOf.src_row}`;
+      l._dup_kind = "phone";
+      dropped.push(l);
+      const cross = dupOf.source !== l.source;
+      ex("duplicate", cross ? "high" : "medium",
+         cross ? "Same phone number reached us through two different sources"
+               : "Same phone number appears twice in one source",
+         `"${l.customer}" · ${ph} · ${dupOf.source} row ${dupOf.src_row} vs ${l.source} row ${l.src_row}`,
+         l, "Counted once only. De-duplicate at source to keep totals clean");
+      continue;
+    }
+
+    if (ph && ph.length === 10) seenPhone.set(ph, l);
+
+    const name = (l.customer || "").trim().toLowerCase();
+    if (name && !placeholders.has(name) && !ph) {
+      const nk = normName(l.customer) + "\u0000" + l.source;
+      const prev = seenName.get(nk);
+      if (prev && Math.abs(diffDays(l.date, prev.date)) <= 3) {
+        ex("possible_duplicate", "low",
+           "Two rows share a customer name within 3 days — both kept, please confirm",
+           `"${l.customer}" · ${l.source} row ${l.src_row} and row ${prev.src_row}. ` +
+           `No phone number on either row to confirm with.`, l,
+           "Capture a phone number so duplicates can be detected reliably");
+      } else {
+        seenName.set(nk, l);
+      }
+    }
+    keep.push(l);
+  }
+
+  const accepted = keep;
+
+  // ------------------------------------------- 3. data-quality exceptions
+  const closedNoOrder = new Set(cfg.canonical.closed_no_order);
+  for (const l of accepted) {
+    if (!l.assigned)
+      ex("unassigned", "critical", "Lead has no salesperson assigned",
+         `${l.source} · ${l.customer || "(blank)"} · ${l.qty || 0} pcs`, l,
+         "Make Salesperson mandatory at lead capture");
+    if (l.qty_defect)
+      ex("qty_null", "medium", "Quantity field contains text instead of a number",
+         `${l.source} · ${l.customer}`, l, "Stop writing 'null' into a numeric field");
+    if (closedNoOrder.has(l.stage) && l.disposition.id === "not_logged")
+      ex("no_reason", "medium", `Closed as ${l.stage} with no reason recorded`,
+         `${l.source} · ${l.customer}`, l, "Make Loss Reason mandatory before closing a lead");
+    if (l.disposition.severity === "recoverable" && closedNoOrder.has(l.stage))
+      ex("recoverable", "high", "Closed without an order although the note records live interest",
+         `${l.qty} pcs · ${l.customer} · note: "${l.note}"`, l, "Re-open and chase");
+    if ((l.quality === "Hot Lead" || l.quality === "Warm Lead") && closedNoOrder.has(l.stage))
+      ex("hot_lost", "high", `Lead rated ${l.quality} was closed as ${l.stage}`,
+         `${l.qty} pcs · ${l.customer}`, l, "Review with the rep before writing off");
+    if (l.quality === "Not Interested" && /requir/.test((l.note || "").toLowerCase()) &&
+        !/not\s*requ|no\s*requ/.test((l.note || "").toLowerCase()))
+      ex("contradiction", "medium", 'Rated "Not Interested" but the note records a requirement',
+         `${l.customer} · note: "${l.note}"`, l, 'Block "Not Interested" when a requirement is logged');
+  }
+
+  for (const f of files) {
+    for (const u of f.unmapped_stage_values) {
+      exceptions.push({
+        kind: "unmapped_stage", severity: "high",
+        message: `Stage value "${u.value}" is not in the mapping and defaulted to New`,
+        detail: `field ${u.field}`, fix: "Add this value to config/sources.json",
+        ref: `${u.file} · ${u.sheet} · row ${u.row}`, customer: "",
+      });
+    }
+  }
+
+  // ------------------------------------------------------ 4. control totals
+  const perFile = files.map(f => {
+    const fname = f.sheets.length ? f.sheets[0].file : "?";
+    return {
+      file: fname, sheets: f.sheets, rows_read: f.rows_read, rows_blank: f.rows_blank,
+      parsed: f.leads.length,
+      no_date: noDate.filter(l => l.src_file === fname).length,
+      out_of_period: outPeriod.filter(l => l.src_file === fname).length,
+      duplicates: dropped.filter(l => l.src_file === fname).length,
+      accepted: accepted.filter(l => l.src_file === fname).length,
+    };
+  });
+
+  const sum = k => perFile.reduce((s, p) => s + p[k], 0);
+  const totals = {
+    rows_read: sum("rows_read"), rows_blank: sum("rows_blank"),
+    parsed: allLeads.length, no_date: noDate.length, out_of_period: outPeriod.length,
+    duplicates: dropped.length, accepted: accepted.length,
+  };
+  totals.balanced = (totals.parsed - totals.no_date - totals.out_of_period -
+                     totals.duplicates === totals.accepted);
+
+  const sevRank = { critical: 0, high: 1, medium: 2, low: 3 };
+  exceptions.sort((a, b) => {
+    const ra = sevRank[a.severity] ?? 9, rb = sevRank[b.severity] ?? 9;
+    return ra !== rb ? ra - rb : (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0);
+  });
+
+  const counts = new Map();
+  for (const e of exceptions) counts.set(e.kind, (counts.get(e.kind) || 0) + 1);
+  const exceptionSummary = [...counts.entries()]
+    .map(([kind, count], i) => ({ kind, count, i }))
+    .sort((a, b) => (b.count - a.count) || (a.i - b.i))
+    .map(({ kind, count }) => ({ kind, count,
+      severity: exceptions.find(e => e.kind === kind).severity }));
+
+  const repSet = new Set(accepted.map(l => l.rep));
+  repSet.delete(unassignedLabel);
+  const reps = [...repSet].sort();
+  if (accepted.some(l => !l.assigned)) reps.push(unassignedLabel);
+
+  return {
+    period: { start: pStart, end: pEnd },
+    leads: accepted,
+    excluded: { no_date: noDate, out_of_period: outPeriod, duplicates: dropped },
+    control_totals: totals,
+    per_file: perFile,
+    exceptions,
+    exception_summary: exceptionSummary,
+    reps,
+    sources: [...new Set(accepted.map(l => l.source))].sort(),
+  };
+}
+
+/* ================================================================ metrics */
+
+function block(rows, cfg) {
+  const C = cfg.canonical, stages = C.stages;
+  const c = {};
+  for (const s of stages) c[s] = 0;
+  for (const r of rows) c[r.stage] = (c[r.stage] || 0) + 1;
+  const total = rows.length;
+  const nw = c[C.untouched_stage] || 0;
+  const won = c[C.won_stage] || 0;
+  const closedNo = C.closed_no_order.reduce((s, k) => s + (c[k] || 0), 0);
+  const qplus = (c["Qualified"] || 0) + (c["Quoted / Proposal"] || 0) + won;
+  const worked = total - nw;
+  const out = {};
+  for (const s of stages) out[s] = c[s] || 0;
+  out.total = total;
+  out.worked = worked;
+  out.qplus = qplus;
+  out.quoted_plus = (c["Quoted / Proposal"] || 0) + won;
+  out.closed_no_order = closedNo;
+  out.open = total - won - closedNo;
+  out.qty = rows.reduce((s, r) => s + r.qty, 0);
+  out.hot = rows.filter(r => r.quality === "Hot Lead").length;
+  out.unassigned = rows.filter(r => !r.assigned).length;
+  out.touch_rate = pct(worked, total);
+  out.qual_rate = pct(qplus, total);
+  out.quoted_rate = pct((c["Quoted / Proposal"] || 0) + won, total);
+  out.conversion = pct(won, total);
+  out.win_on_worked = pct(won, worked);
+  out.loss_rate = pct(closedNo, total);
+  return out;
+}
+
+function compute(rec, cfg) {
+  const C = cfg.canonical;
+  const leads = rec.leads;
+  const stages = C.stages, quals = C.qualities;
+  const reps = rec.reps, sources = rec.sources;
+  const end = rec.period.end;
+  const asof = isoAddDays(end, 1);
+
+  const overall = block(leads, cfg);
+  const byRep = {}; for (const r of reps) byRep[r] = block(leads.filter(l => l.rep === r), cfg);
+  const bySource = {}; for (const s of sources) bySource[s] = block(leads.filter(l => l.source === s), cfg);
+  const byDetail = {};
+  for (const d of [...new Set(leads.map(l => l.source_detail))].sort())
+    byDetail[d] = block(leads.filter(l => l.source_detail === d), cfg);
+
+  const cube = {};
+  for (const r of reps) {
+    cube[r] = { ALL: byRep[r] };
+    for (const s of sources) cube[r][s] = block(leads.filter(l => l.rep === r && l.source === s), cfg);
+  }
+  const totCube = { ALL: overall };
+  for (const s of sources) totCube[s] = bySource[s];
+
+  const stageMatrix = stages.map(s => {
+    const row = { stage: s,
+      total: leads.filter(l => l.stage === s).length,
+      share: pct(leads.filter(l => l.stage === s).length, leads.length) };
+    for (const src of sources) row[src] = leads.filter(l => l.stage === s && l.source === src).length;
+    return row;
+  });
+
+  const qualityMatrix = quals.map(q => {
+    const row = { quality: q,
+      total: leads.filter(l => l.quality === q).length,
+      share: pct(leads.filter(l => l.quality === q).length, leads.length),
+      qualified: leads.filter(l => l.quality === q && l.stage === "Qualified").length,
+      not_qualified: leads.filter(l => l.quality === q && l.stage === "Not Qualified").length };
+    for (const src of sources) row[src] = leads.filter(l => l.quality === q && l.source === src).length;
+    return row;
+  });
+
+  // ---- untouched ageing
+  const newLeads = leads.filter(l => l.stage === C.untouched_stage);
+  const ageOf = l => diffDays(asof, l.date);
+  const tally = arr => {
+    const m = new Map();
+    for (const l of arr) m.set(ageOf(l), (m.get(ageOf(l)) || 0) + 1);
+    const o = {};
+    [...m.keys()].sort((a, b) => a - b).forEach(k => { o[String(k)] = m.get(k); });
+    return o;
+  };
+  const ageing = tally(newLeads);
+  const ageingByRep = {};
+  for (const r of reps) ageingByRep[r] = tally(newLeads.filter(l => l.rep === r));
+  const aged = newLeads.filter(l => ageOf(l) >= 2).length;
+
+  // ---- unassigned register
+  const unassigned = leads.filter(l => !l.assigned).map(l => ({
+    qty: l.qty, age: ageOf(l), date: l.date, source: l.source, customer: l.customer,
+    phone: l.phone, city: l.city, product: l.product,
+  })).sort((a, b) => (b.qty - a.qty) || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+  // ---- dispositions and demand lost
+  const closed = leads.filter(l => C.closed_no_order.indexOf(l.stage) >= 0);
+  const disp = new Map();
+  for (const l of closed) {
+    const k = l.disposition.label;
+    if (!disp.has(k)) disp.set(k, { leads: 0, qty: 0, severity: "normal" });
+    const d = disp.get(k);
+    d.leads += 1; d.qty += l.qty; d.severity = l.disposition.severity;
+  }
+  const dispositions = [...disp.entries()]
+    .map(([label, v], i) => ({ label, leads: v.leads, qty: v.qty, severity: v.severity,
+                               share: pct(v.leads, closed.length), i }))
+    .sort((a, b) => (b.leads - a.leads) || (a.i - b.i))
+    .map(({ i, ...r }) => r);
+  const demand = [...disp.entries()]
+    .map(([label, v], i) => ({ label, leads: v.leads, qty: v.qty, severity: v.severity, i }))
+    .filter(x => x.qty > 0)
+    .sort((a, b) => (b.qty - a.qty) || (a.i - b.i))
+    .map(({ i, ...r }) => r);
+
+  const qsum = arr => arr.reduce((s, l) => s + l.qty, 0);
+  const demandTotals = {
+    total: qsum(leads),
+    closed: qsum(closed),
+    open: qsum(leads.filter(l => C.closed_no_order.concat([C.won_stage]).indexOf(l.stage) < 0)),
+    won: qsum(leads.filter(l => l.stage === C.won_stage)),
+    product_gap: qsum(closed.filter(l => l.disposition.severity === "product")),
+  };
+
+  // ---- leads worth chasing again
+  const recoverable = closed
+    .filter(l => l.qty >= 10 || l.quality === "Hot Lead" || l.quality === "Warm Lead" ||
+                 l.disposition.severity === "recoverable" || l.disposition.severity === "product")
+    .map((l, i) => ({ qty: l.qty, date: l.date, source: l.source, rep: l.rep,
+                      customer: l.customer, product: l.product, quality: l.quality,
+                      stage: l.stage, note: l.note, why: l.disposition.label, i }))
+    .sort((a, b) => (b.qty - a.qty) || (a.i - b.i))
+    .slice(0, 40)
+    .map(({ i, ...r }) => r);
+
+  // ---- daily
+  const daily = [];
+  for (let d = rec.period.start; d <= end; d = isoAddDays(d, 1)) {
+    const rows = leads.filter(l => l.date === d);
+    const row = { date: d, day: weekdayOf(d), total: rows.length };
+    for (const s of stages) row[s] = rows.filter(l => l.stage === s).length;
+    for (const s of sources) row["src_" + s] = rows.filter(l => l.source === s).length;
+    daily.push(row);
+  }
+
+  return {
+    period: rec.period, asof,
+    stages, qualities: quals, reps, sources,
+    overall, by_rep: byRep, by_source: bySource, by_detail: byDetail,
+    cube, tot_cube: totCube,
+    stage_matrix: stageMatrix, quality_matrix: qualityMatrix,
+    ageing, ageing_by_rep: ageingByRep, aged_untouched: aged,
+    unassigned, dispositions, demand, demand_totals: demandTotals,
+    recoverable, daily,
+  };
+}
+
+/* =============================================================== insights */
+
+function buildInsights(m, rec, cfg) {
+  const C = cfg.canonical;
+  const out = [], o = m.overall, n = grp;
+
+  if (m.unassigned.length) {
+    const q = m.unassigned.reduce((s, u) => s + u.qty, 0);
+    const top = m.unassigned[0];
+    out.push({ sev: "critical",
+      title: `${m.unassigned.length} leads have no salesperson assigned at all`,
+      why: `They carry ${n(q)} pieces of demand` +
+           (top.qty > 0 ? `, including a single ${n(top.qty)}-piece enquiry from ${top.customer}` : "") +
+           `. Oldest is ${Math.max(...m.unassigned.map(u => u.age))} days old.`,
+      action: "Assign every one of them today, largest quantity first." });
+  }
+
+  const d = m.demand_totals;
+  if (d.total && d.closed) {
+    out.push({ sev: "critical",
+      title: `${n(d.closed)} of ${n(d.total)} pieces of demand were closed without an order`,
+      why: `${pyf(pct(d.closed, d.total))}% of everything asked for this week. ` +
+           `${n(d.open)} pieces are still open and winnable.`,
+      action: "Work the open pieces before they age out." });
+  }
+  if (d.product_gap) {
+    out.push({ sev: "high",
+      title: `${n(d.product_gap)} pieces were rejected on product range, not on buyer intent`,
+      why: "These buyers wanted something the range does not cover. " +
+           "That is a sourcing decision sitting inside a sales report.",
+      action: "Put the range gap in front of management with the piece count attached." });
+  }
+
+  if (o.New) {
+    out.push({ sev: "high",
+      title: `${o.New} of ${o.total} leads (${pyf(pct(o.New, o.total))}%) were never worked`,
+      why: `${m.aged_untouched} of them are already 2+ days old. ` +
+           `Online lead intent decays within hours.`,
+      action: "Clear the aged backlog before taking on new spend." });
+  }
+
+  const worst = Object.entries(m.by_rep)
+    .filter(([r, b]) => r !== C.unassigned_label && b.total >= 10)
+    .sort((a, b) => a[1].touch_rate - b[1].touch_rate);
+  if (worst.length && worst[0][1].touch_rate < 70) {
+    const [r, b] = worst[0];
+    out.push({ sev: "high",
+      title: `${r} worked only ${pyf(b.touch_rate)}% of ${b.total} assigned leads`,
+      why: `${b.New} leads never touched. ` +
+           `Best in team is ${pyf(Math.max(...worst.map(x => x[1].touch_rate)))}%.`,
+      action: "Redistribute the aged untouched leads and review capacity." });
+    const split = m.sources.map(s => [s, m.cube[r][s]]).filter(([, b2]) => b2.total >= 8);
+    const good = split.filter(([, b2]) => b2.qual_rate >= 20).map(([s]) => s);
+    const bad = split.filter(([, b2]) => b2.qual_rate === 0).map(([s]) => s);
+    if (good.length && bad.length) {
+      out.push({ sev: "medium",
+        title: `${r}’s gap is channel-specific, not a blanket skill problem`,
+        why: `Qualifies well on ${good.join(", ")} but produces nothing from ${bad.join(", ")}.`,
+        action: `Weight their allocation toward ${good[0]} and coach the rest.` });
+    }
+  }
+
+  const ranked = Object.entries(m.by_source).filter(([, b]) => b.total >= 10)
+    .sort((a, b) => b[1].qual_rate - a[1].qual_rate);
+  if (ranked.length >= 2) {
+    const best = ranked[0], low = ranked[ranked.length - 1];
+    out.push({ sev: "high",
+      title: `${best[0]} qualifies ${pyf(best[1].qual_rate)}% of its leads; ` +
+             `${low[0]} manages ${pyf(low[1].qual_rate)}%`,
+      why: `${best[0]}: ${best[1].total} leads, ${n(best[1].qty)} pcs of demand. ` +
+           `${low[0]}: ${low[1].total} leads, ${n(low[1].qty)} pcs.`,
+      action: `Shift budget and attention from ${low[0]} toward ${best[0]}.` });
+  }
+
+  const overload = Object.entries(m.by_rep).filter(([r]) => r !== C.unassigned_label)
+    .sort((a, b) => b[1].total - a[1].total);
+  if (overload.length >= 2 && overload[0][1].total > 1.4 * overload[overload.length - 1][1].total) {
+    const [r, b] = overload[0];
+    out.push({ sev: "medium",
+      title: `${r} carries ${b.total} leads — ${pyf(pct(b.total, o.total))}% of everything`,
+      why: `Loss rate ${pyf(b.loss_rate)}%. The lightest load in the team is ` +
+           `${overload[overload.length - 1][1].total}.`,
+      action: "Rebalance the allocation before quality of follow-up slips further." });
+  }
+
+  const gaps = {};
+  for (const e of rec.exception_summary) gaps[e.kind] = e.count;
+  if (gaps.no_reason) {
+    out.push({ sev: "medium",
+      title: `${gaps.no_reason} leads were closed with no reason recorded`,
+      why: "Those losses cannot be diagnosed or coached against.",
+      action: "Make Loss Reason mandatory before a lead can be closed." });
+  }
+  if (gaps.recoverable || gaps.hot_lost) {
+    const k = (gaps.recoverable || 0) + (gaps.hot_lost || 0);
+    out.push({ sev: "high",
+      title: `${k} leads were written off despite recorded interest`,
+      why: "Either rated Hot/Warm or carrying a note that records a live requirement.",
+      action: "Re-open these first — cheapest pipeline available." });
+  }
+  if (!rec.leads.some(l => l.source === "Meta" && l.qty)) {
+    out.push({ sev: "medium", title: "No deal value is captured in any feed",
+      why: "Revenue conversion, average order value and ROI per source cannot be " +
+           "calculated. Only lead counts and piece quantities are measurable.",
+      action: "Add an Order Value field at Qualified stage." });
+  }
+
+  const rank = { critical: 0, high: 1, medium: 2 };
+  return out.map((x, i) => ({ x, i }))
+    .sort((a, b) => ((rank[a.x.sev] ?? 3) - (rank[b.x.sev] ?? 3)) || (a.i - b.i))
+    .map(({ x }) => x);
+}
+
+/* =============================================================== exports */
+
+const API = { readFile, reconcile, compute, buildInsights, pct, grp,
+              iso, fromISO, isoAddDays, diffDays, parseDate, normKey, pyTitle, toInt, clean };
+root.OakEngine = API;
+if (typeof module !== "undefined" && module.exports) module.exports = API;
+
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+<script>/* Turns a workbook into the plain cell matrices the engine expects.
+   Dates come back as local-midnight Date objects with no timezone shift,
+   which is what openpyxl handed the Python engine. */
+(function (root) {
+"use strict";
+
+const MAX_COLS = 80;
+
+function cellValue(XLSX, cell) {
+  if (!cell || cell.t === "z") return null;
+  if (cell.t === "d") {
+    const d = cell.v instanceof Date ? cell.v : new Date(cell.v);
+    return isNaN(d) ? null : d;
+  }
+  if (cell.t === "n") {
+    const fmt = cell.z;
+    if (fmt && XLSX.SSF.is_date(fmt)) {
+      const p = XLSX.SSF.parse_date_code(cell.v);
+      if (p && p.y) return new Date(p.y, p.m - 1, p.d, p.H || 0, p.M || 0, Math.floor(p.S || 0));
+    }
+    return cell.v;
+  }
+  if (cell.t === "e") return null;
+  return cell.v === undefined ? null : cell.v;
+}
+
+/** ArrayBuffer/Uint8Array -> [{name, rows}] */
+function readWorkbook(XLSX, data) {
+  const wb = XLSX.read(data, { type: "array", cellNF: true, cellDates: false,
+                               cellStyles: false, sheetStubs: false });
+  return wb.SheetNames.map(name => {
+    const ws = wb.Sheets[name];
+    const rows = [];
+    if (ws && ws["!ref"]) {
+      const range = XLSX.utils.decode_range(ws["!ref"]);
+      const lastCol = Math.min(range.e.c, range.s.c + MAX_COLS - 1);
+      for (let R = range.s.r; R <= range.e.r; R++) {
+        const row = [];
+        for (let Cc = range.s.c; Cc <= lastCol; Cc++) {
+          row.push(cellValue(XLSX, ws[XLSX.utils.encode_cell({ r: R, c: Cc })]));
+        }
+        // openpyxl indexes from column A; pad if the sheet starts further right
+        for (let k = 0; k < range.s.c; k++) row.unshift(null);
+        rows.push(row);
+      }
+    }
+    return { name, rows };
+  });
+}
+
+const API = { readWorkbook };
+root.OakXlsx = API;
+if (typeof module !== "undefined" && module.exports) module.exports = API;
+
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+<script>/* ===========================================================================
+   Master workbook builder — a port of core/excel.py onto ExcelJS, so the
+   "Download Excel report" button produces the same file without a server.
+   =========================================================================== */
+(function (root) {
+"use strict";
+
+const BAR = "2E75B6", NAVY = "1F4E79", PINK = "FFC7CE", PINKT = "9C0006";
+const CREAM = "FFF2CC", CREAMT = "C55A11", GREY = "6B7684";
+const GREEN = "1E7A4B", GREENL = "DCF0E4", RED = "B3261E", REDL = "FBE3E1";
+const AMBER = "B26B00", AMBERL = "FDF0DC", A = "Arial";
+
+const col = hex => ({ argb: "FF" + hex });
+const font = (size, opts) => Object.assign({ name: A, size }, opts || {});
+
+const F_T    = font(16, { bold: true, color: col(NAVY) });
+const F_ST   = font(9,  { color: col(GREY), italic: true });
+const F_BAR  = font(11, { bold: true, color: col("FFFFFF") });
+const F_H    = font(10, { bold: true, color: col("FFFFFF") });
+const F_B    = font(10);
+const F_BB   = font(10, { bold: true });
+const F_N    = font(9,  { color: col(GREY) });
+const F_PINK = font(10, { bold: true, color: col(PINKT) });
+const F_TOT  = font(10, { bold: true, color: col(CREAMT) });
+
+const fill = hex => ({ type: "pattern", pattern: "solid", fgColor: col(hex) });
+const FL_BAR = fill(BAR), FL_H = fill(NAVY), FL_PINK = fill(PINK), FL_CREAM = fill(CREAM);
+const FL_G = fill(GREENL), FL_R = fill(REDL), FL_A = fill(AMBERL);
+
+const _side = { style: "thin", color: col("9EB6CE") };
+const BORD = { left: _side, right: _side, top: _side, bottom: _side };
+const C = { horizontal: "center", vertical: "middle" };
+const L = { horizontal: "left", vertical: "middle" };
+const W = { horizontal: "center", vertical: "middle", wrapText: true };
+const LW = { horizontal: "left", vertical: "middle", wrapText: true };
+
+const INT = '#,##0;-#,##0;"-"', PCT = '0.0%;-0.0%;"-"', PLAIN = "#,##0", DMY = "DD-MMM-YY";
+
+/** Excel serial dates are UTC-based, so build the Date in UTC to avoid a shift. */
+const xlDate = isoStr => new Date(Date.UTC(+isoStr.slice(0, 4), +isoStr.slice(5, 7) - 1,
+                                           +isoStr.slice(8, 10)));
+
+function _title(ws, t, sub, width) {
+  ws.getCell(1, 1).value = t;   ws.getCell(1, 1).font = F_T;
+  ws.getCell(2, 1).value = sub; ws.getCell(2, 1).font = F_ST;
+  ws.mergeCells(1, 1, 1, width);
+  ws.mergeCells(2, 1, 2, width);
+  ws.getRow(1).height = 24;
+  ws.getRow(2).height = 14;
+}
+
+function _bar(ws, row, text, width) {
+  for (let i = 1; i <= width; i++) ws.getCell(row, i).fill = FL_BAR;
+  const c = ws.getCell(row, 1);
+  c.value = text; c.font = F_BAR; c.alignment = L;
+  ws.mergeCells(row, 1, row, width);
+  ws.getRow(row).height = 20;
+}
+
+function _hdr(ws, row, vals, h) {
+  vals.forEach((v, i) => {
+    const c = ws.getCell(row, 1 + i);
+    c.value = v; c.font = F_H; c.fill = FL_H; c.alignment = W; c.border = BORD;
+  });
+  ws.getRow(row).height = h || 30;
+}
+
+function _put(ws, r, c, v, fmt, f, align, fl) {
+  const cell = ws.getCell(r, c);
+  cell.value = (v === undefined || v === "" ? null : v);
+  cell.font = f || F_B;
+  cell.alignment = align || C;
+  cell.border = BORD;
+  if (fmt) cell.numFmt = fmt;
+  if (fl) cell.fill = fl;
+  return cell;
+}
+
+function _widths(ws, widths) { widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; }); }
+
+const today = () => {
+  const d = new Date();
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${String(d.getDate()).padStart(2, "0")} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+/* ------------------------------------------------------------------ build */
+
+async function build(ExcelJS, rec, m, insights, cfg) {
+  const C_ = cfg.canonical;
+  const stages = m.stages, quals = m.qualities;
+  const reps = m.reps, sources = m.sources;
+  const per = `${m.period.start} to ${m.period.end}`;
+  const o = m.overall;
+  const wb = new ExcelJS.Workbook();
+
+  /* ------------------------------------------------------ MASTER REPORT */
+  let ws = wb.addWorksheet("MASTER REPORT");
+  ws.views = [{ showGridLines: false }];
+  _title(ws, "Master Lead Report",
+         `All sources · ${per} · ${o.total} leads · generated ${today()}`, 7 + stages.length);
+
+  _bar(ws, 4, `  EMPLOYEE WISE SNAPSHOT  (ALL SOURCES, ${per})`,
+       4 + sources.length + stages.length);
+  _hdr(ws, 5, ["Salesperson", "Total Enquiry"].concat(sources, stages, ["Conversion %", "Loss %"]));
+  let r = 6;
+  for (const rep of reps) {
+    const un = rep === C_.unassigned_label;
+    const fnt = un ? F_PINK : F_B, fl = un ? FL_PINK : null;
+    const b = m.by_rep[rep];
+    _put(ws, r, 1, rep, null, un ? F_PINK : F_BB, L, fl);
+    _put(ws, r, 2, b.total, INT, un ? F_PINK : F_BB, C, fl);
+    sources.forEach((s, i) => _put(ws, r, 3 + i, m.cube[rep][s].total, INT, fnt, C, fl));
+    stages.forEach((s, i) => _put(ws, r, 3 + sources.length + i, b[s], INT, fnt, C, fl));
+    const c0 = 3 + sources.length + stages.length;
+    _put(ws, r, c0, b.conversion / 100, PCT, un ? F_PINK : F_BB, C, fl || FL_G);
+    _put(ws, r, c0 + 1, b.loss_rate / 100, PCT, fnt, C, fl);
+    if (!un) ws.getCell(r, 3 + sources.length).fill = FL_A;
+    r++;
+  }
+  _put(ws, r, 1, "TOTAL", null, F_TOT, L, FL_CREAM);
+  _put(ws, r, 2, o.total, INT, F_TOT, C, FL_CREAM);
+  sources.forEach((s, i) => _put(ws, r, 3 + i, m.by_source[s].total, INT, F_TOT, C, FL_CREAM));
+  stages.forEach((s, i) => _put(ws, r, 3 + sources.length + i, o[s], INT, F_TOT, C, FL_CREAM));
+  let c0 = 3 + sources.length + stages.length;
+  _put(ws, r, c0, o.conversion / 100, PCT, F_TOT, C, FL_CREAM);
+  _put(ws, r, c0 + 1, o.loss_rate / 100, PCT, F_TOT, C, FL_CREAM);
+  const end1 = r;
+
+  const b2 = end1 + 3;
+  _bar(ws, b2, "  SOURCE WISE SNAPSHOT", 10);
+  _hdr(ws, b2 + 1, ["Source", "Total Enquiry", "% Share", "Assigned", "Unassigned",
+                    "Won", "Closed no order", "Qualified", "Hot Leads", "Qty (pcs)"]);
+  r = b2 + 2;
+  for (const s of sources) {
+    const b = m.by_source[s];
+    _put(ws, r, 1, s, null, F_BB, L);
+    _put(ws, r, 2, b.total, INT, F_BB);
+    _put(ws, r, 3, o.total ? b.total / o.total : 0, PCT);
+    _put(ws, r, 4, b.total - b.unassigned, INT);
+    _put(ws, r, 5, b.unassigned, INT, b.unassigned ? F_PINK : F_B, C, b.unassigned ? FL_PINK : null);
+    _put(ws, r, 6, b.Won, INT, F_B, C, FL_G);
+    _put(ws, r, 7, b.closed_no_order, INT, F_B, C, FL_R);
+    _put(ws, r, 8, b.Qualified, INT);
+    _put(ws, r, 9, b.hot, INT, F_BB);
+    _put(ws, r, 10, b.qty, PLAIN, F_BB);
+    r++;
+  }
+  _put(ws, r, 1, "TOTAL", null, F_TOT, L, FL_CREAM);
+  [[2, o.total], [4, o.total - o.unassigned], [5, o.unassigned], [6, o.Won],
+   [7, o.closed_no_order], [8, o.Qualified], [9, o.hot], [10, o.qty]]
+    .forEach(([cc, v]) => _put(ws, r, cc, v, cc === 10 ? PLAIN : INT, F_TOT, C, FL_CREAM));
+  _put(ws, r, 3, 1, PCT, F_TOT, C, FL_CREAM);
+  const end2 = r;
+
+  const b3 = end2 + 2;
+  _bar(ws, b3, "  STAGE WISE SNAPSHOT  (UNIFIED)", 3 + sources.length);
+  _hdr(ws, b3 + 1, ["Stage (Unified)", "No. of Leads", "% Share"].concat(sources));
+  r = b3 + 2;
+  for (const row of m.stage_matrix) {
+    const s = row.stage;
+    const fl = s === "Won" ? FL_G : C_.closed_no_order.indexOf(s) >= 0 ? FL_R
+             : s === C_.untouched_stage ? FL_A : null;
+    _put(ws, r, 1, s, null, F_BB, L, fl);
+    _put(ws, r, 2, row.total, INT, F_BB, C, fl);
+    _put(ws, r, 3, row.share / 100, PCT, F_B, C, fl);
+    sources.forEach((src, i) => _put(ws, r, 4 + i, row[src], INT, F_B, C, fl));
+    r++;
+  }
+  _put(ws, r, 1, "TOTAL", null, F_TOT, L, FL_CREAM);
+  _put(ws, r, 2, o.total, INT, F_TOT, C, FL_CREAM);
+  _put(ws, r, 3, 1, PCT, F_TOT, C, FL_CREAM);
+  sources.forEach((src, i) => _put(ws, r, 4 + i, m.by_source[src].total, INT, F_TOT, C, FL_CREAM));
+  const end3 = r;
+
+  const b4 = end3 + 2;
+  _bar(ws, b4, "  LEAD QUALITY SNAPSHOT  (HOT / WARM / COLD)", 5 + sources.length);
+  _hdr(ws, b4 + 1, ["Lead Quality", "Total", "% Share"].concat(sources, ["Qualified", "Not Qualified"]));
+  r = b4 + 2;
+  for (const row of m.quality_matrix) {
+    const q = row.quality;
+    const fl = q === "Hot Lead" ? FL_G
+             : (q === "Not Interested" || q === "Don't Pick Call") ? FL_R : null;
+    _put(ws, r, 1, q, null, F_BB, L, fl);
+    _put(ws, r, 2, row.total, INT, F_BB, C, fl);
+    _put(ws, r, 3, row.share / 100, PCT, F_B, C, fl);
+    sources.forEach((src, i) => _put(ws, r, 4 + i, row[src], INT, F_B, C, fl));
+    _put(ws, r, 4 + sources.length, row.qualified, INT, F_B, C, fl);
+    _put(ws, r, 5 + sources.length, row.not_qualified, INT, F_B, C, fl);
+    r++;
+  }
+  _put(ws, r, 1, "TOTAL", null, F_TOT, L, FL_CREAM);
+  _put(ws, r, 2, o.total, INT, F_TOT, C, FL_CREAM);
+  _put(ws, r, 3, 1, PCT, F_TOT, C, FL_CREAM);
+  _widths(ws, [22, 13].concat(sources.map(() => 11), stages.map(() => 11), [12, 10]));
+
+  /* ----------------------------------------------------- RECONCILIATION */
+  ws = wb.addWorksheet("Reconciliation");
+  ws.views = [{ showGridLines: false }];
+  _title(ws, "Reconciliation & Audit Trail",
+         "Every row that entered the engine is accounted for below. " +
+         "If the control total balances, nothing was silently dropped.", 9);
+  const t = rec.control_totals;
+  _bar(ws, 4, "  CONTROL TOTALS", 9);
+  _hdr(ws, 5, ["File", "Sheet(s) detected", "Format", "Rows read", "Blank rows",
+               "Parsed", "No date", "Out of period", "Duplicates", "Accepted"]);
+  r = 6;
+  const KEYS = ["rows_read", "rows_blank", "parsed", "no_date", "out_of_period",
+                "duplicates", "accepted"];
+  for (const p of rec.per_file) {
+    _put(ws, r, 1, p.file, null, F_BB, L);
+    _put(ws, r, 2, p.sheets.map(s => s.sheet).join(", "), null, F_B, L);
+    _put(ws, r, 3, p.sheets.map(s => s.label).join(", "), null, F_B, L);
+    KEYS.forEach((k, i) => _put(ws, r, 4 + i, p[k], INT, k === "accepted" ? F_BB : F_B));
+    r++;
+  }
+  _put(ws, r, 1, "TOTAL", null, F_TOT, L, FL_CREAM);
+  _put(ws, r, 2, null, null, F_TOT, L, FL_CREAM);
+  _put(ws, r, 3, null, null, F_TOT, L, FL_CREAM);
+  KEYS.forEach((k, i) => _put(ws, r, 4 + i, t[k], INT, F_TOT, C, FL_CREAM));
+  r += 2;
+  const bal = ws.getCell(r, 1);
+  bal.value = t.balanced
+    ? "BALANCED — parsed − no-date − out-of-period − duplicates = accepted"
+    : "OUT OF BALANCE — investigate before using this report";
+  bal.font = font(11, { bold: true, color: col(t.balanced ? GREEN : RED) });
+  ws.mergeCells(r, 1, r, 10);
+
+  r += 2;
+  _bar(ws, r, "  EXCEPTION REGISTER", 6);
+  _hdr(ws, r + 1, ["Severity", "Type", "What was found", "Detail", "Source row", "Suggested fix"]);
+  let rr = r + 2;
+  for (const e of rec.exceptions) {
+    const fl = e.severity === "critical" ? FL_PINK : e.severity === "high" ? FL_R
+             : e.severity === "medium" ? FL_A : null;
+    _put(ws, rr, 1, e.severity.toUpperCase(), null, F_BB, C, fl);
+    _put(ws, rr, 2, e.kind, null, F_B, L, fl);
+    _put(ws, rr, 3, e.message, null, F_B, L, fl);
+    _put(ws, rr, 4, e.detail.slice(0, 180), null, F_N, L, fl);
+    _put(ws, rr, 5, e.ref, null, F_N, L, fl);
+    _put(ws, rr, 6, e.fix, null, F_N, L, fl);
+    rr++;
+  }
+  if (rr - 1 >= r + 1) {
+    ws.autoFilter = { from: { row: r + 1, column: 1 }, to: { row: rr - 1, column: 6 } };
+  }
+  _widths(ws, [13, 18, 46, 52, 34, 44, 13, 13, 13, 12]);
+
+  /* ------------------------------------------------------------ INSIGHTS */
+  ws = wb.addWorksheet("Findings & Actions");
+  ws.views = [{ showGridLines: false }];
+  _title(ws, "Findings & Recommended Actions",
+         `Generated from the reconciled data for ${per}`, 8);
+  _hdr(ws, 4, ["#", "Severity", "Finding", "Why it matters", "Action"]);
+  r = 5;
+  insights.forEach((f, i) => {
+    const fl = f.sev === "critical" ? FL_PINK : f.sev === "high" ? FL_R : FL_A;
+    _put(ws, r, 1, i + 1, INT, F_BB, C, fl);
+    _put(ws, r, 2, f.sev.toUpperCase(), null, F_BB, C, fl);
+    _put(ws, r, 3, f.title, null, F_BB, LW, fl);
+    _put(ws, r, 4, f.why, null, F_N, LW, fl);
+    _put(ws, r, 5, f.action, null, F_B, LW, fl);
+    ws.getRow(r).height = 34;
+    r++;
+  });
+  _widths(ws, [5, 12, 52, 62, 46]);
+
+  /* ---------------------------------------------------------- UNASSIGNED */
+  if (m.unassigned.length) {
+    ws = wb.addWorksheet("Unassigned Leads");
+    ws.views = [{ showGridLines: false }];
+    _title(ws, "Unassigned Leads — no owner",
+           `${m.unassigned.length} leads reached the system with a blank salesperson and ` +
+           `were never picked up. Largest quantity first.`, 8);
+    _hdr(ws, 4, ["Qty (pcs)", "Age (days)", "Date", "Source", "Customer",
+                 "Phone", "City / Location", "Requirement"]);
+    r = 5;
+    for (const u of m.unassigned) {
+      _put(ws, r, 1, u.qty, PLAIN, F_BB);
+      _put(ws, r, 2, u.age, INT, u.age >= 4 ? font(10, { bold: true, color: col(RED) }) : F_B);
+      _put(ws, r, 3, xlDate(u.date), DMY);
+      _put(ws, r, 4, u.source);
+      _put(ws, r, 5, u.customer, null, F_B, L);
+      _put(ws, r, 6, u.phone);
+      _put(ws, r, 7, u.city, null, F_B, L);
+      _put(ws, r, 8, u.product, null, F_B, L);
+      if (u.qty >= 50) for (let cc = 1; cc <= 8; cc++) ws.getCell(r, cc).fill = FL_PINK;
+      r++;
+    }
+    _widths(ws, [11, 11, 12, 12, 26, 14, 20, 46]);
+  }
+
+  /* ------------------------------------------------------- DEMAND / LOSS */
+  ws = wb.addWorksheet("Demand & Loss");
+  ws.views = [{ showGridLines: false }];
+  _title(ws, "Demand Lost & Disposition Analysis",
+         "Pieces at stake behind every lead closed without an order.", 6);
+  const d = m.demand_totals;
+  _bar(ws, 4, "  DEMAND AT A GLANCE (pieces)", 6);
+  _hdr(ws, 5, ["Total demand", "Closed without order", "Still open", "Won",
+               "Rejected on product range", "% of demand closed"]);
+  _put(ws, 6, 1, d.total, PLAIN, F_BB);
+  _put(ws, 6, 2, d.closed, PLAIN, F_BB, C, FL_R);
+  _put(ws, 6, 3, d.open, PLAIN, F_BB, C, FL_A);
+  _put(ws, 6, 4, d.won, PLAIN, F_BB, C, FL_G);
+  _put(ws, 6, 5, d.product_gap, PLAIN, F_BB, C, FL_A);
+  _put(ws, 6, 6, d.total ? d.closed / d.total : 0, PCT, F_BB);
+  _bar(ws, 8, "  WHY THAT DEMAND WAS LOST", 4);
+  _hdr(ws, 9, ["Reason", "Leads", "Pieces at stake", "% of lost demand"]);
+  r = 10;
+  const tq = m.demand.reduce((s, x) => s + x.qty, 0) || 1;
+  for (const x of m.demand) {
+    const fl = (x.severity === "product" || x.severity === "recoverable") ? FL_A : null;
+    _put(ws, r, 1, x.label, null, F_BB, L, fl);
+    _put(ws, r, 2, x.leads, INT, F_B, C, fl);
+    _put(ws, r, 3, x.qty, PLAIN, F_BB, C, fl);
+    _put(ws, r, 4, x.qty / tq, PCT, F_B, C, fl);
+    r++;
+  }
+  r += 1;
+  _bar(ws, r, "  EVERY DISPOSITION (all leads closed without an order)", 4);
+  _hdr(ws, r + 1, ["Reason", "Leads", "% of closed", "Pieces"]);
+  rr = r + 2;
+  for (const x of m.dispositions) {
+    _put(ws, rr, 1, x.label, null, F_BB, L);
+    _put(ws, rr, 2, x.leads, INT);
+    _put(ws, rr, 3, x.share / 100, PCT);
+    _put(ws, rr, 4, x.qty, PLAIN);
+    rr++;
+  }
+  rr += 1;
+  _bar(ws, rr, "  WORTH CHASING AGAIN", 9);
+  _hdr(ws, rr + 1, ["Qty", "Date", "Source", "Salesperson", "Customer",
+                    "Requirement", "Quality", "Stage", "Note logged"]);
+  let r2 = rr + 2;
+  for (const x of m.recoverable) {
+    _put(ws, r2, 1, x.qty, PLAIN, F_BB);
+    _put(ws, r2, 2, xlDate(x.date), DMY);
+    _put(ws, r2, 3, x.source);
+    _put(ws, r2, 4, x.rep, null, F_B, L);
+    _put(ws, r2, 5, x.customer, null, F_B, L);
+    _put(ws, r2, 6, x.product, null, F_B, L);
+    _put(ws, r2, 7, x.quality, null, F_B, C, x.quality === "Hot Lead" ? FL_G : null);
+    _put(ws, r2, 8, x.stage, null, F_BB, C, FL_R);
+    _put(ws, r2, 9, x.note || "— nothing recorded —", null, F_N, L);
+    r2++;
+  }
+  _widths(ws, [13, 12, 14, 16, 26, 40, 16, 15, 34]);
+
+  /* --------------------------------------------------------- MASTER DATA */
+  ws = wb.addWorksheet("Master Data");
+  _title(ws, "Master Data — reconciled lead register",
+         `${rec.leads.length} accepted leads for ${per}, normalised across every source.`, 17);
+  const cols = ["Lead ref", "Date", "Source", "Salesperson", "Assigned?", "Customer", "Phone",
+                "City", "Product / Requirement", "Qty", "Stage (Unified)", "Original status",
+                "Lead Quality", "Note", "Disposition", "Source file", "Row"];
+  _hdr(ws, 4, cols);
+  r = 5;
+  const order = {};
+  stages.forEach((s, i) => { order[s] = i; });
+  const UN = C_.unassigned_label;
+  const sorted = rec.leads.slice().sort((a, b) =>
+    ((a.rep === UN) - (b.rep === UN)) ||
+    (a.rep < b.rep ? -1 : a.rep > b.rep ? 1 : 0) ||
+    (order[a.stage] - order[b.stage]) ||
+    (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+  const LEFT_COLS = new Set([5, 7, 8, 13, 14, 15]);          // 0-based, as in the Python
+  for (const l of sorted) {
+    const vals = [`${l.source.slice(0, 3).toUpperCase()}-${String(l.src_row).padStart(5, "0")}`,
+                  xlDate(l.date), l.source, l.rep, l.assigned ? "Yes" : "No", l.customer,
+                  l.phone, l.city, l.product, l.qty, l.stage, l.raw_stage,
+                  l.quality, l.note, l.disposition.label, l.src_file, l.src_row];
+    vals.forEach((v, i) => {
+      const c = ws.getCell(r, 1 + i);
+      c.value = (v === undefined || v === "" ? null : v);
+      c.font = F_B; c.border = BORD;
+      c.alignment = LEFT_COLS.has(i) ? L : C;
+      if (i === 1) c.numFmt = DMY;
+      if (i === 9) c.numFmt = PLAIN;
+    });
+    const st = l.stage;
+    const cell = ws.getCell(r, 11);
+    const stageFill = st === "Won" ? FL_G : C_.closed_no_order.indexOf(st) >= 0 ? FL_R
+                    : st === C_.untouched_stage ? FL_A : null;
+    if (stageFill) cell.fill = stageFill;
+    cell.font = font(10, { bold: true, color: col(
+      st === "Won" ? GREEN : C_.closed_no_order.indexOf(st) >= 0 ? RED
+      : st === C_.untouched_stage ? AMBER : "000000") });
+    if (!l.assigned) {
+      for (const cc of [4, 5]) {
+        ws.getCell(r, cc).fill = FL_PINK;
+        ws.getCell(r, cc).font = F_PINK;
+      }
+    }
+    r++;
+  }
+  ws.views = [{ state: "frozen", xSplit: 2, ySplit: 4, showGridLines: false }];
+  if (r - 1 >= 4) ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: r - 1, column: 17 } };
+  _widths(ws, [13, 11, 11, 16, 10, 24, 13, 18, 40, 8, 17, 15, 15, 30, 26, 26, 7]);
+
+  return wb.xlsx.writeBuffer();
+}
+
+const API = { build };
+root.OakReport = API;
+if (typeof module !== "undefined" && module.exports) module.exports = API;
+
+})(typeof globalThis !== "undefined" ? globalThis : this);
+</script>
+<script>/* OakCraft Lead Reconciler — front end. Everything runs in this tab: the
+   spreadsheets are parsed here, reconciled here, and the Excel report is
+   built here. Only the saved run summaries travel, to the team's store. */
+(() => {
+"use strict";
+
+const E = window.OakEngine, RX = window.OakXlsx, REP = window.OakReport, CFG = window.OAK_CONFIG;
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nf  = n => (Number(n) || 0).toLocaleString("en-IN");
+const pcts = v => (v === 0 || v == null) ? "—" : `${Number(v).toFixed(1)}%`;
+const pc2 = v => `${Number(v || 0).toFixed(2)}%`;
+const dash = v => (v === 0 || v == null) ? "—" : nf(v);
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const fdate = s => {
+  if (!s || s.length < 10) return s || "";
+  return `${s.slice(8, 10)} ${MON[+s.slice(5, 7) - 1]}`;
+};
+const stamp = () => {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-` +
+         `${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-` +
+         Math.random().toString(36).slice(2, 6);
+};
+
+const STAGE_VAR = { "New": "--s-new", "Contacted": "--s-con", "Qualified": "--s-qual",
+  "Quoted / Proposal": "--s-prop", "Won": "--s-won", "Lost": "--s-lost", "Not Qualified": "--s-nq" };
+const STAGE_SHORT = { "New": "Never worked", "Quoted / Proposal": "Quoted" };
+const short = s => STAGE_SHORT[s] || s;
+const sv = s => `var(${STAGE_VAR[s] || "--muted"})`;
+const QVAR = q => q === "Hot Lead" ? "--s-won" : q === "Warm Lead" ? "--s-new"
+  : q === "Cold Lead" ? "--s-con" : q === "Not Rated" ? "--muted" : "--s-lost";
+
+let DATA = null, FILES = [], SRC = "ALL", EXSEV = "ALL", IS_SAMPLE = false;
+
+/* ═══════════════════════════════════════════════════ capabilities */
+
+const useCap = name => {
+  try {
+    if (window.claude && typeof window.claude.use === "function")
+      return window.claude.use(name).catch(() => null);
+  } catch (_) { /* not in a capable host */ }
+  return Promise.resolve(null);
+};
+
+/* ═══════════════════════════════════════════════════ run storage
+   Shared team store when the page can reach one, this browser otherwise.
+   A run's headline figures live in one small summary document; the full
+   reconciled detail is gzipped and split across part documents beneath it. */
+
+const Store = {
+  mode: "local", db: null, user: null, myId: null, canWrite: true,
+  runs: [], listeners: [],
+
+  onChange(fn) { this.listeners.push(fn); },
+  emit() { this.listeners.forEach(f => { try { f(); } catch (e) { console.error(e); } }); },
+
+  async init() {
+    this.readLocal();
+    this.emit();
+    const [db, user] = await Promise.all([useCap("db"), useCap("user")]);
+    this.user = user;
+    if (user) {
+      try { this.myId = await user.id(); } catch (_) { this.myId = null; }
+      try { const w = await user.can("data.write"); this.canWrite = (w !== false); } catch (_) {}
+    }
+    if (!db) { this.setPill(); return; }
+    this.db = db;
+    this.mode = "shared";
+    this.setPill();
+    try {
+      db.collection("runs").limit(300).onSnapshot(snap => {
+        this.runs = snap.docs.map(d => Object.assign({ run_id: d.id }, d.data()))
+                             .filter(r => r && r.period_end)
+                             .sort((a, b) => (a.run_id < b.run_id ? 1 : -1));
+        this.emit();
+      }, err => {
+        console.warn("shared history unavailable:", err && err.code);
+        this.mode = "local"; this.db = null; this.readLocal(); this.setPill(); this.emit();
+      });
+    } catch (err) {
+      this.mode = "local"; this.db = null; this.readLocal(); this.setPill(); this.emit();
+    }
+  },
+
+  setPill() {
+    const el = $("#storePill");
+    if (this.mode === "shared") {
+      el.className = "pill live";
+      el.textContent = this.canWrite ? "Shared with your team" : "Shared history · read only";
+    } else {
+      el.className = "pill local";
+      el.textContent = "Saved in this browser";
+    }
+    const hint = $("#histHint");
+    hint.textContent = this.mode === "shared"
+      ? "Runs are saved to the team's shared history, so everyone here sees the same week-on-week movement. The spreadsheets themselves never leave the browser they were opened in."
+      : "Runs are saved in this browser only. Open this page while signed in to your organisation to share the history with your team.";
+  },
+
+  /* ---- local fallback ---- */
+  readLocal() {
+    if (this.mode === "shared") return;
+    try {
+      this.runs = JSON.parse(localStorage.getItem("oak.runs") || "[]");
+    } catch (_) { this.runs = []; }
+  },
+  writeLocal() {
+    try { localStorage.setItem("oak.runs", JSON.stringify(this.runs)); } catch (_) {}
+  },
+
+  /* ---- payload packing ---- */
+  async pack(obj) {
+    const json = JSON.stringify(obj);
+    if (typeof CompressionStream === "function") {
+      try {
+        const stream = new Blob([json]).stream().pipeThrough(new CompressionStream("gzip"));
+        const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+        let bin = "";
+        for (let i = 0; i < buf.length; i += 0x8000)
+          bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+        return { enc: "gzip-b64", text: btoa(bin) };
+      } catch (_) { /* fall through to plain JSON */ }
+    }
+    return { enc: "json", text: json };
+  },
+  async unpack(enc, text) {
+    if (enc !== "gzip-b64") return JSON.parse(text);
+    const bin = atob(text);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(stream).text());
+  },
+
+  summarise(payload) {
+    const m = payload.metrics, o = m.overall;
+    return {
+      run_id: payload.run_id, created: payload.created, by: this.myId || null,
+      period_start: m.period.start, period_end: m.period.end,
+      leads: o.total, new: o.New, conversion: o.conversion, touch_rate: o.touch_rate,
+      qual_rate: o.qual_rate, unassigned: o.unassigned, qty: o.qty,
+      files: payload.reconciliation.per_file.map(f => f.file),
+    };
+  },
+
+  async save(payload) {
+    const summary = this.summarise(payload);
+    const { enc, text } = await this.pack(payload);
+    const SIZE = 180000;
+    const parts = [];
+    for (let i = 0; i < text.length; i += SIZE) parts.push(text.slice(i, i + SIZE));
+    if (parts.length > 40) throw { code: "too_big", message: "This run is too large to save." };
+    summary.chunks = parts.length;
+    summary.enc = enc;
+
+    if (this.mode === "shared") {
+      const col = this.db.collection("runs");
+      for (let i = 0; i < parts.length; i++) {
+        await col.doc(summary.run_id).collection("parts").doc(String(i)).set({ d: parts[i] });
+      }
+      await col.doc(summary.run_id).set(summary);    // summary last: it is the commit
+    } else {
+      try { localStorage.setItem("oak.run." + summary.run_id, JSON.stringify({ enc, text })); }
+      catch (_) { throw { code: "full", message: "This browser has no room left to save runs." }; }
+      this.runs = [summary, ...this.runs.filter(r => r.run_id !== summary.run_id)];
+      this.writeLocal();
+      this.emit();
+    }
+    return summary;
+  },
+
+  async open(runId) {
+    if (this.mode === "shared") {
+      const doc = await this.db.collection("runs").doc(runId).get();
+      if (!doc.exists) throw new Error("not found");
+      const s = doc.data();
+      let text = "";
+      for (let i = 0; i < (s.chunks || 0); i++) {
+        const p = await this.db.collection("runs").doc(runId).collection("parts").doc(String(i)).get();
+        if (!p.exists) throw new Error("incomplete");
+        text += p.data().d;
+      }
+      return this.unpack(s.enc, text);
+    }
+    const raw = localStorage.getItem("oak.run." + runId);
+    if (!raw) throw new Error("not found");
+    const { enc, text } = JSON.parse(raw);
+    return this.unpack(enc, text);
+  },
+
+  async remove(runId) {
+    if (this.mode === "shared") {
+      const s = this.runs.find(r => r.run_id === runId);
+      for (let i = 0; i < ((s && s.chunks) || 0); i++)
+        await this.db.collection("runs").doc(runId).collection("parts").doc(String(i)).delete();
+      await this.db.collection("runs").doc(runId).delete();
+    } else {
+      try { localStorage.removeItem("oak.run." + runId); } catch (_) {}
+      this.runs = this.runs.filter(r => r.run_id !== runId);
+      this.writeLocal();
+      this.emit();
+    }
+  },
+
+  /* Oldest first, one row per reporting week — the shape the trend table wants. */
+  trend() {
+    const rows = this.runs.slice().sort((a, b) =>
+      a.period_end < b.period_end ? -1 : a.period_end > b.period_end ? 1 : 0);
+    const out = [];
+    for (const r of rows) {
+      const k = r.period_start + "|" + r.period_end;
+      const at = out.findIndex(x => x.period_start + "|" + x.period_end === k);
+      if (at >= 0) out.splice(at, 1);
+      out.push(r);
+    }
+    return out;
+  },
+};
+
+/* ═══════════════════════════════════════════════════ navigation */
+
+function show(view) {
+  $$("main > section").forEach(s => { s.hidden = s.id !== "v-" + view; });
+  $$("#nav button").forEach(b => b.setAttribute("aria-current", String(b.dataset.view === view)));
+  window.scrollTo(0, 0);
+}
+$("#nav").addEventListener("click", e => {
+  const b = e.target.closest("button[data-view]");
+  if (b && !b.disabled) show(b.dataset.view);
+});
+function unlock(on) {
+  $$("#nav button[data-view]").forEach(b => {
+    if (!["upload", "history"].includes(b.dataset.view)) b.disabled = !on;
+  });
+}
+let toastEl = null;
+function toast(msg, ok) {
+  if (toastEl) toastEl.remove();
+  toastEl = document.createElement("div");
+  toastEl.className = "toast" + (ok ? " ok" : "");
+  toastEl.setAttribute("role", "status");
+  toastEl.textContent = msg;
+  document.body.appendChild(toastEl);
+  const mine = toastEl;
+  setTimeout(() => { if (mine === toastEl) { mine.remove(); toastEl = null; } }, 6500);
+}
+
+/* ═══════════════════════════════════════════════════ upload */
+
+const drop = $("#drop"), fileInput = $("#file");
+$("#browse").onclick = () => fileInput.click();
+drop.onclick = e => { if (e.target === drop || e.target.closest(".icon,h3,p")) fileInput.click(); };
+fileInput.onchange = () => { addFiles([...fileInput.files]); fileInput.value = ""; };
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.add("hot");
+}));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault();
+  if (ev === "dragleave" && drop.contains(e.relatedTarget)) return;
+  drop.classList.remove("hot");
+}));
+drop.addEventListener("drop", e => addFiles([...(e.dataTransfer?.files || [])]));
+
+function addFiles(list) {
+  const ok = list.filter(f => /\.(xlsx|xlsm|xls)$/i.test(f.name));
+  const bad = list.length - ok.length;
+  ok.forEach(f => { if (!FILES.some(x => x.name === f.name && x.size === f.size)) FILES.push(f); });
+  if (bad) toast(`${bad} file${bad > 1 ? "s" : ""} skipped — only Excel files are accepted.`);
+  renderFiles();
+}
+function renderFiles() {
+  $("#flist").innerHTML = FILES.map((f, i) => `
+    <div class="frow">
+      <span class="nm">${esc(f.name)}</span>
+      <span class="sz">${(f.size / 1024).toFixed(0)} KB</span>
+      <button class="x" data-i="${i}" title="Remove" aria-label="Remove ${esc(f.name)}">&times;</button>
+    </div>`).join("");
+  $("#run").disabled = !FILES.length;
+  $("#clear").hidden = !FILES.length;
+  $("#status").textContent = FILES.length ? `${FILES.length} file${FILES.length > 1 ? "s" : ""} ready` : "";
+}
+$("#flist").onclick = e => {
+  const b = e.target.closest("button[data-i]");
+  if (b) { FILES.splice(+b.dataset.i, 1); renderFiles(); }
+};
+$("#clear").onclick = () => { FILES = []; renderFiles(); };
+
+const yieldToPaint = () => new Promise(r => setTimeout(r, 0));
+
+$("#run").onclick = async () => {
+  if (!FILES.length) return;
+  $("#run").disabled = true; $("#demo").disabled = true; $("#prog").hidden = false;
+  $("#status").textContent = "Reading files, detecting formats, reconciling…";
+  await yieldToPaint();
+  try {
+    const parsed = [], skipped = [];
+    for (const f of FILES) {
+      $("#status").textContent = `Reading ${f.name}…`;
+      await yieldToPaint();
+      let res;
+      try {
+        const sheets = RX.readWorkbook(window.XLSX, new Uint8Array(await f.arrayBuffer()));
+        res = E.readFile(sheets, f.name, CFG);
+      } catch (err) {
+        skipped.push({ file: f.name, reason: `could not be read: ${err.message || err}` });
+        continue;
+      }
+      if (!res.leads.length) {
+        const detected = res.sheets.map(s => s.label).join(", ") || "nothing";
+        skipped.push({ file: f.name, reason: `no recognisable lead rows (detected: ${detected})` });
+        continue;
+      }
+      parsed.push(res);
+    }
+    if (!parsed.length) {
+      toast(skipped.length
+        ? `${skipped[0].file} — ${skipped[0].reason}`
+        : "None of the uploaded files matched a known format.");
+      return;
+    }
+    $("#status").textContent = "Reconciling…";
+    await yieldToPaint();
+    const payload = buildRun(parsed, skipped);
+    IS_SAMPLE = false;
+    load(payload);
+    show("overview");
+    save(payload);
+  } catch (err) {
+    console.error(err);
+    toast(`Analysis failed: ${err.message || err}`);
+  } finally {
+    $("#run").disabled = !FILES.length; $("#demo").disabled = false;
+    $("#prog").hidden = true; $("#status").textContent = "";
+  }
+};
+
+function buildRun(parsed, skipped) {
+  const rec = E.reconcile(parsed, CFG);
+  const m = E.compute(rec, CFG);
+  const insights = E.buildInsights(m, rec, CFG);
+  const light = Object.assign({}, rec);
+  delete light.excluded;
+  return {
+    run_id: stamp(),
+    created: new Date().toISOString().slice(0, 19),
+    skipped: skipped || [],
+    reconciliation: light, metrics: m, insights,
+  };
+}
+
+async function save(payload) {
+  if (IS_SAMPLE) return;
+  if (Store.mode === "shared" && !Store.canWrite) {
+    toast("Run complete. You have read-only access, so it was not added to the shared history.");
+    return;
+  }
+  try {
+    await Store.save(payload);
+    toast(Store.mode === "shared"
+      ? "Saved to the team's shared history."
+      : "Saved in this browser.", true);
+  } catch (err) {
+    console.warn(err);
+    toast(err && err.message ? `Not saved — ${err.message}`
+                             : "The run could not be saved to history.");
+  }
+}
+
+/* ═══════════════════════════════════════════════════ sample week */
+
+$("#demo").onclick = async () => {
+  $("#demo").disabled = true;
+  await yieldToPaint();
+  try {
+    const sheets = sampleSheets();
+    const parsed = sheets.map(s => E.readFile([s.sheet], s.file, CFG));
+    IS_SAMPLE = true;
+    load(buildRun(parsed, []));
+    show("overview");
+  } catch (err) {
+    console.error(err); toast("The sample could not be built.");
+  } finally { $("#demo").disabled = false; }
+};
+$("#dropSample").onclick = () => {
+  IS_SAMPLE = false; DATA = null; unlock(false);
+  $("#sampleBanner").hidden = true;
+  $("#runLabel").textContent = "No run loaded";
+  $("#navUn").textContent = ""; $("#navEx").textContent = "";
+  show("upload");
+};
+
+/* A believable but entirely invented week, built from a fixed seed so the
+   demo is the same for everyone, and run through the real pipeline. */
+function sampleSheets() {
+  let seed = 20260914;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const end = new Date(); end.setHours(0, 0, 0, 0);
+  const p = n => String(n).padStart(2, "0");
+  const day = k => { const d = new Date(end.getTime() - k * 86400000);
+    return { d, s: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}` }; };
+
+  const REPS = ["Ujala Rajput", "Amira Saikh", "Mayank Mittal", "Niti Kumari", ""];
+  const CITY = ["Delhi", "Noida", "Gurugram", "Jaipur", "Mumbai", "Pune", "Lucknow"];
+  const PROD = ["Office chair", "Workstation 6 seater", "Conference table", "Executive desk",
+                "Visitor chair", "Storage unit", "Reception counter"];
+  const NOTE = ["", "call back next week", "not picked, catalogue shared", "no requirement",
+                "low price expectation", "requirement of 40 chairs", "wants plastic chairs",
+                "delhi base dealer only", "call cut", "catalogue shared, awaiting reply"];
+  const QUAL = ["Hot Lead", "Warm Lead", "Cold Lead", "Not Interested", "Don't Pick Call", ""];
+
+  const phone = () => "9" + String(Math.floor(rnd() * 900000000) + 100000000);
+
+  // 1. Meta export — text timestamps, no quality rating, no quantity
+  const meta = [["created_time_ist", "platform", "full_name", "phone_number",
+                 "city_state", "lead_status", "assigned_to"]];
+  for (let i = 0; i < 74; i++) {
+    const { d } = day(Math.floor(rnd() * 7));
+    meta.push([`${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ` +
+               `${p(9 + Math.floor(rnd() * 9))}:${p(Math.floor(rnd() * 60))}:00`,
+               pick(["ig", "fb"]),
+               pick(["Rahul Sharma", "Priya Nair", "Imran Qureshi", "Sneha Rao", "Arjun Desai"]),
+               phone(), pick(CITY),
+               pick(["CREATED", "CREATED", "CREATED", "CONTACTED", "QUALIFIED", "LOST"]),
+               pick(REPS)]);
+  }
+
+  // 2. IndiaMART workflow — real dates, quantities, quality ratings
+  const im = [["Timestamp", "Buyer Name", "Mobile Number", "City/ Location", "Subject",
+               "Quantity", "Assigned Salesperson", "Qualification Status",
+               "Lead's Quality", "DISCUSSION"]];
+  for (let i = 0; i < 96; i++) {
+    const { d } = day(Math.floor(rnd() * 7));
+    im.push([d, pick(["Sunrise Interiors", "Vertex Furnishings", "Nova Office", "Anand Traders",
+                      "India Mart Buyer", "Crest Modular", "Lakeview Hotels"]),
+             phone(), pick(CITY), pick(PROD),
+             pick([0, 1, 4, 10, 24, 40, 75, 150, "null"]),
+             pick(REPS),
+             pick(["QUALIFIED", "NOT QUALIFIED", "LOST", "WON", ""]),
+             pick(QUAL), pick(NOTE)]);
+  }
+
+  // 3. JustDial workflow — its own stage words, mixed sources
+  const jd = [["Enquiry Id", "Date", "Customer", "Mobile", "City", "Product", "Qty",
+               "Salesperson", "Stage", "Lead's Quality", "Final Remark's", "Source"]];
+  for (let i = 0; i < 88; i++) {
+    const { d } = day(Math.floor(rnd() * 7));
+    jd.push([`E${String(1000 + i)}`, d,
+             pick(["Jd Buyer", "Meridian Offices", "Shree Enterprises", "Kalpana Singh",
+                   "Bluestone Realty", "Jd Buyer"]),
+             phone(), pick(CITY), pick(PROD),
+             pick([0, 2, 6, 12, 30, 60, 120]),
+             pick(REPS),
+             pick(["NEW", "NEW", "CONTACTED", "QUOTED", "WON", "LOST", "NOT QUALIFIED"]),
+             pick(QUAL), pick(NOTE), pick(["JustDial", "JustDial", "India Mart"])]);
+  }
+
+  return [
+    { file: "sample_meta_leads.xlsx",      sheet: { name: "Leads",     rows: meta } },
+    { file: "sample_indiamart_leads.xlsx", sheet: { name: "Sheet1",    rows: im } },
+    { file: "sample_justdial_leads.xlsx",  sheet: { name: "Enquiries", rows: jd } },
+  ];
+}
+
+/* ═══════════════════════════════════════════════════ load a run */
+
+function load(j) {
+  DATA = j;
+  unlock(true);
+  const m = j.metrics;
+  $("#sampleBanner").hidden = !IS_SAMPLE;
+  $("#runLabel").textContent =
+    `${m.period.start} → ${m.period.end} · ${m.overall.total} leads` + (IS_SAMPLE ? " · sample" : "");
+  $("#navUn").textContent = m.overall.unassigned || "";
+  $("#navEx").textContent = j.reconciliation.exceptions.length || "";
+  if (j.skipped?.length) j.skipped.forEach(s => toast(`${s.file} skipped — ${s.reason}`));
+  renderOverview(); renderMaster(); renderPeople(); renderSources();
+  renderDemand(); renderUnassigned(); renderRecon(); renderExceptions();
+}
+
+/* ═══════════════════════════════════════════════════ overview */
+
+function renderOverview() {
+  const m = DATA.metrics, o = m.overall, rec = DATA.reconciliation;
+  $("#ovPeriod").textContent =
+    `${m.period.start} to ${m.period.end} · ${rec.per_file.length} file(s) · ` +
+    `${m.sources.join(", ")} · reconciled ${new Date(DATA.created).toLocaleString("en-GB")}`;
+  $("#asof").textContent = "as on " + fdate(m.asof);
+
+  const crit = rec.exceptions.filter(e => e.severity === "critical").length;
+  $("#ovKpis").innerHTML = [
+    ["", "Leads reconciled", nf(o.total), `${rec.control_totals.rows_read} rows read in`],
+    ["warn", "Never worked", nf(o.New), `${pcts(100 * o.New / (o.total || 1))} · ${m.aged_untouched} aged 2+ days`],
+    [o.unassigned ? "crit" : "", "Unassigned", nf(o.unassigned),
+      o.unassigned ? `${nf(m.unassigned.reduce((s, u) => s + u.qty, 0))} pcs with no owner` : "all leads owned"],
+    ["bad", "Closed, no order", nf(o.closed_no_order), `${pcts(o.loss_rate)} of all leads`],
+    ["good", "Conversion", pc2(o.conversion), `${o.Won} won out of ${o.total}`],
+    [crit ? "crit" : "", "Exceptions", nf(rec.exceptions.length), `${crit} critical`],
+  ].map(([cls, lab, num, foot]) => `
+    <div class="kpi ${cls}"><div class="lab">${lab}</div>
+      <div class="num">${num}</div><div class="foot">${esc(foot)}</div></div>`).join("");
+
+  $("#srcFilter").innerHTML = $("#srcFilter2").innerHTML =
+    ["ALL", ...m.sources].map(s => `<button data-src="${esc(s)}"
+      aria-pressed="${s === SRC}">${s === "ALL" ? "All sources" : esc(s)}</button>`).join("");
+
+  drawFunnel(); drawAgeing();
+
+  $("#insights").innerHTML = DATA.insights.map((f, i) => `
+    <div class="find"><div class="n">${String(i + 1).padStart(2, "0")}</div>
+      <div><span class="sev ${f.sev}">${f.sev}</span>
+        <div class="t" style="margin-top:6px">${esc(f.title)}</div>
+        <div class="w">${esc(f.why)}</div>
+        <div class="a">${esc(f.action)}</div></div></div>`).join("")
+    || `<div class="empty">No findings — the data looks clean.</div>`;
+}
+
+function drawFunnel() {
+  const m = DATA.metrics, t = m.tot_cube[SRC] || m.overall;
+  const max = Math.max(...m.stages.map(s => t[s] || 0), 1);
+  $("#funnel").innerHTML = m.stages.map(s => `
+    <div class="fn-row">
+      <div class="fn-name"><span class="dot" style="background:${sv(s)}"></span>${esc(short(s))}</div>
+      <div class="trk"><i style="width:${100 * (t[s] || 0) / max}%;background:${sv(s)}"></i></div>
+      <div class="fn-val"><b>${t[s] || 0}</b><span>${pcts(100 * (t[s] || 0) / (t.total || 1))}</span></div>
+    </div>`).join("");
+  $("#fnNote").innerHTML =
+    `<b>${t.total}</b> leads · <b>${t.worked}</b> worked (${pcts(t.touch_rate)} touch rate) ·
+     <b>${t.qplus}</b> reached Qualified or better (${pcts(t.qual_rate)}) ·
+     <b>${nf(t.qty)}</b> pieces of demand · <b>${t.Won}</b> won (${pc2(t.conversion)} conversion)`;
+  const lbl = SRC === "ALL" ? "All sources" : SRC;
+  $("#fnScope").textContent = lbl; $("#peopleScope").textContent = lbl;
+}
+
+function drawAgeing() {
+  const a = DATA.metrics.ageing, ks = Object.keys(a);
+  if (!ks.length) { $("#ageing").innerHTML = `<div class="empty">Nothing untouched.</div>`;
+                    $("#ageNote").textContent = ""; return; }
+  const max = Math.max(...ks.map(k => a[k]));
+  $("#ageing").innerHTML = ks.map(k => `
+    <div class="col"><i class="${+k >= 2 ? "crit" : ""}" style="height:${20 + 100 * a[k] / max}px">${a[k]}</i>
+      <span>${k}d</span></div>`).join("");
+  const aged = DATA.metrics.aged_untouched;
+  $("#ageNote").innerHTML = aged
+    ? `<b style="color:var(--s-lost)">${aged} leads are 2 days or older and still untouched.</b>
+       Online lead intent decays within hours — this is the cheapest recovery available.`
+    : "Nothing older than a day is sitting untouched.";
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-src]");
+  if (!b) return;
+  SRC = b.dataset.src;
+  $$("[data-src]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.src === SRC)));
+  drawFunnel(); drawReps();
+});
+
+/* ═══════════════════════════════════════════════════ tables */
+
+function table(el, head, rows) {
+  $(el).innerHTML = `<thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>${rows.join("")}</tbody>`;
+}
+const td = (v, cls = "") => `<td class="${cls}">${v}</td>`;
+
+function renderMaster() {
+  const m = DATA.metrics, o = m.overall;
+  $("#mrPeriod").textContent = `${m.period.start} to ${m.period.end}`;
+  table("#tEmp",
+    ["Salesperson", "Total", ...m.sources, ...m.stages.map(short), "Conversion %", "Loss %"],
+    m.reps.map(r => {
+      const b = m.by_rep[r], un = b.unassigned === b.total && b.total > 0;
+      return `<tr class="${un ? "unass" : ""}">${td(esc(r), "nm")}${td(`<b>${b.total}</b>`)}
+        ${m.sources.map(s => td(dash(m.cube[r][s].total))).join("")}
+        ${m.stages.map(s => td(dash(b[s]), s === "Won" && b[s] ? "hi-g" : s === "New" && b[s] > 20 ? "hi-a" : "")).join("")}
+        ${td(b.conversion ? pc2(b.conversion) : "—", b.conversion ? "hi-g" : "")}
+        ${td(pcts(b.loss_rate), b.loss_rate > 50 ? "hi" : "")}</tr>`;
+    }).concat(`<tr class="tot">${td("TOTAL")}${td(o.total)}
+      ${m.sources.map(s => td(m.by_source[s].total)).join("")}
+      ${m.stages.map(s => td(dash(o[s]))).join("")}
+      ${td(pc2(o.conversion))}${td(pcts(o.loss_rate))}</tr>`));
+
+  table("#tSrc", ["Source", "Leads", "Share", "Assigned", "Unassigned", "Won", "Closed", "Qualified", "Hot", "Qty"],
+    m.sources.map(s => { const b = m.by_source[s];
+      return `<tr>${td(esc(s), "nm")}${td(b.total)}${td(pcts(100 * b.total / (o.total || 1)))}
+        ${td(b.total - b.unassigned)}${td(dash(b.unassigned), b.unassigned ? "hi" : "")}
+        ${td(dash(b.Won), b.Won ? "hi-g" : "")}${td(b.closed_no_order)}${td(b.Qualified)}
+        ${td(dash(b.hot))}${td(`<b>${nf(b.qty)}</b>`)}</tr>`; })
+      .concat(`<tr class="tot">${td("TOTAL")}${td(o.total)}${td("100.0%")}
+        ${td(o.total - o.unassigned)}${td(dash(o.unassigned))}${td(dash(o.Won))}
+        ${td(o.closed_no_order)}${td(o.Qualified)}${td(dash(o.hot))}${td(nf(o.qty))}</tr>`));
+
+  table("#tStage", ["Stage (unified)", "Leads", "Share", ...m.sources],
+    m.stage_matrix.map(r => `<tr>${td(
+      `<span class="dot" style="display:inline-block;background:${sv(r.stage)};margin-right:7px"></span>${esc(r.stage)}`, "nm")}
+      ${td(`<b>${r.total}</b>`)}${td(pcts(r.share))}
+      ${m.sources.map(s => td(dash(r[s]))).join("")}</tr>`)
+      .concat(`<tr class="tot">${td("TOTAL")}${td(o.total)}${td("100.0%")}
+        ${m.sources.map(s => td(m.by_source[s].total)).join("")}</tr>`));
+
+  const qrows = m.quality_matrix.map(r => `<tr>${td(
+    `<span class="dot" style="display:inline-block;background:var(${QVAR(r.quality)});margin-right:7px"></span>${esc(r.quality)}`, "nm")}
+    ${td(`<b>${r.total}</b>`)}${td(pcts(r.share))}
+    ${m.sources.map(s => td(dash(r[s]))).join("")}${td(dash(r.qualified))}${td(dash(r.not_qualified))}</tr>`);
+  table("#tQual", ["Lead quality", "Leads", "Share", ...m.sources, "Qualified", "Not qualified"], qrows);
+  table("#tQual2", ["Lead quality", "Leads", "Share", ...m.sources, "Qualified", "Not qualified"], qrows);
+}
+
+function renderPeople() {
+  drawReps();
+  const m = DATA.metrics, o = m.overall;
+  table("#tScore",
+    ["Salesperson", "Leads", "Never worked", "Touch rate", "Qualified+", "Qualification rate",
+     "Quoted+", "Won", "Conversion %", "Closed no order", "Loss rate", "Open", "Hot", "Qty"],
+    m.reps.map(r => { const b = m.by_rep[r], un = b.unassigned === b.total && b.total > 0;
+      return `<tr class="${un ? "unass" : ""}">${td(esc(r), "nm")}${td(b.total)}
+        ${td(dash(b.New), b.New > 20 ? "hi-a" : "")}${td(pcts(b.touch_rate), b.touch_rate < 60 ? "hi" : "")}
+        ${td(dash(b.qplus))}${td(pcts(b.qual_rate), b.qual_rate === 0 ? "hi" : "")}
+        ${td(dash(b.quoted_plus))}${td(dash(b.Won), b.Won ? "hi-g" : "")}
+        ${td(b.conversion ? pc2(b.conversion) : "—", b.conversion ? "hi-g" : "")}
+        ${td(b.closed_no_order)}${td(pcts(b.loss_rate), b.loss_rate > 50 ? "hi" : "")}
+        ${td(b.open)}${td(dash(b.hot))}${td(nf(b.qty))}</tr>`; })
+      .concat(`<tr class="tot">${td("TEAM TOTAL")}${td(o.total)}${td(o.New)}${td(pcts(o.touch_rate))}
+        ${td(o.qplus)}${td(pcts(o.qual_rate))}${td(o.quoted_plus)}${td(o.Won)}${td(pc2(o.conversion))}
+        ${td(o.closed_no_order)}${td(pcts(o.loss_rate))}${td(o.open)}${td(o.hot)}${td(nf(o.qty))}</tr>`));
+}
+
+function drawReps() {
+  const m = DATA.metrics;
+  $("#reps").innerHTML = m.reps.map(r => {
+    const c = SRC === "ALL" ? m.by_rep[r] : m.cube[r][SRC], T = c.total;
+    const un = m.by_rep[r].unassigned === m.by_rep[r].total && m.by_rep[r].total > 0;
+    if (!T) return `<div class="rep"><div class="rhead"><span class="rname">${esc(r)}</span>
+      <span class="rtot">no leads from this source</span></div></div>`;
+    const bars = m.stages.filter(s => c[s] > 0).map(s => { const w = 100 * c[s] / T;
+      return `<i style="width:${w}%;background:${sv(s)}" title="${esc(short(s))}: ${c[s]}">${w > 7 ? c[s] : ""}</i>`;
+    }).join("");
+    const chips = un
+      ? `<span class="chip bad">No owner — <b>${T}</b> leads never opened</span>
+         <span class="chip bad">Demand at risk <b>${nf(c.qty)}</b> pcs</span>`
+      : [`<span class="chip ${c.touch_rate < 60 ? "bad" : ""}">Touch <b>${pcts(c.touch_rate)}</b></span>`,
+         `<span class="chip ${c.New > 20 ? "warn" : ""}">Never worked <b>${c.New}</b></span>`,
+         `<span class="chip ${c.qplus === 0 ? "bad" : ""}">Qualified+ <b>${c.qplus}</b> · ${pcts(c.qual_rate)}</span>`,
+         `<span class="chip ${c.Won ? "good" : ""}">Conversion <b>${pc2(c.conversion)}</b></span>`,
+         `<span class="chip">Hot <b>${c.hot}</b></span>`,
+         `<span class="chip">Qty <b>${nf(c.qty)}</b> pcs</span>`].join("");
+    return `<div class="rep"><div class="rhead">
+        <span class="rname" ${un ? 'style="color:var(--pink)"' : ""}>${esc(r)}</span>
+        <span class="rtot"><b>${T}</b> leads assigned</span></div>
+      <div class="stack">${bars}</div><div class="chips">${chips}</div></div>`;
+  }).join("");
+  $("#legend").innerHTML = m.stages.map(s =>
+    `<span class="lg"><span class="dot" style="background:${sv(s)}"></span>${esc(short(s))}</span>`).join("");
+}
+
+function renderSources() {
+  const m = DATA.metrics, o = m.overall;
+  table("#tSrcPerf",
+    ["Source", "Leads", "Share", ...m.stages.map(short), "Qualification rate", "Conversion %", "Loss rate", "Hot", "Qty (pcs)"],
+    m.sources.map(s => { const b = m.by_source[s];
+      return `<tr>${td(esc(s), "nm")}${td(`<b>${b.total}</b>`)}${td(pcts(100 * b.total / (o.total || 1)))}
+        ${m.stages.map(x => td(dash(b[x]))).join("")}
+        ${td(pcts(b.qual_rate), b.qual_rate > 20 ? "hi-g" : "")}
+        ${td(b.conversion ? pc2(b.conversion) : "—", b.conversion ? "hi-g" : "")}
+        ${td(pcts(b.loss_rate), b.loss_rate > 80 ? "hi" : "")}${td(dash(b.hot))}${td(`<b>${nf(b.qty)}</b>`)}</tr>`; })
+      .concat(`<tr class="tot">${td("ALL SOURCES")}${td(o.total)}${td("100.0%")}
+        ${m.stages.map(x => td(dash(o[x]))).join("")}${td(pcts(o.qual_rate))}${td(pc2(o.conversion))}
+        ${td(pcts(o.loss_rate))}${td(o.hot)}${td(nf(o.qty))}</tr>`));
+
+  table("#tDetail", ["Platform", "Leads", "Never worked", "Qualified+", "Won", "Closed"],
+    Object.entries(m.by_detail).map(([k, b]) =>
+      `<tr>${td(esc(k), "nm")}${td(b.total)}${td(dash(b.New))}${td(dash(b.qplus))}
+        ${td(dash(b.Won), b.Won ? "hi-g" : "")}${td(b.closed_no_order)}</tr>`));
+}
+
+function renderDemand() {
+  const m = DATA.metrics, d = m.demand_totals;
+  $("#demKpis").innerHTML = [
+    ["", "Total demand", nf(d.total) + " pcs", "everything asked for this week"],
+    ["bad", "Closed without order", nf(d.closed) + " pcs", pcts(100 * d.closed / (d.total || 1)) + " of demand"],
+    ["warn", "Still open", nf(d.open) + " pcs", "winnable if worked now"],
+    ["warn", "Rejected on range", nf(d.product_gap) + " pcs", "a sourcing decision, not a sales one"],
+  ].map(([c, l, n, f]) => `<div class="kpi ${c}"><div class="lab">${l}</div>
+      <div class="num">${n}</div><div class="foot">${f}</div></div>`).join("");
+
+  const tq = m.demand.reduce((s, x) => s + x.qty, 0) || 1;
+  table("#tDemand", ["Reason", "Leads", "Pieces at stake", "% of lost demand"],
+    m.demand.map(x => `<tr class="${["product", "recoverable"].includes(x.severity) ? "flag" : ""}">
+      ${td(esc(x.label), "nm")}${td(x.leads)}${td(`<b>${nf(x.qty)}</b>`)}${td(pcts(100 * x.qty / tq))}</tr>`)
+      .concat(`<tr class="tot">${td("TOTAL")}${td(m.demand.reduce((s, x) => s + x.leads, 0))}
+        ${td(nf(tq))}${td("100.0%")}</tr>`));
+
+  table("#tDisp", ["Reason", "Leads", "% of closed", "Pieces"],
+    m.dispositions.map(x => `<tr>${td(esc(x.label), "nm")}${td(x.leads)}
+      ${td(pcts(x.share))}${td(dash(x.qty))}</tr>`));
+
+  table("#tRecover", ["Qty", "Date", "Source", "Salesperson", "Customer", "Requirement", "Quality", "Stage", "Note"],
+    m.recoverable.map(x => `<tr class="${x.quality === "Hot Lead" ? "flag" : ""}">
+      ${td(`<b>${nf(x.qty)}</b>`)}${td(fdate(x.date))}${td(esc(x.source))}${td(esc(x.rep), "nm")}
+      ${td(esc(x.customer), "nm")}${td(esc(x.product), "l")}
+      ${td(esc(x.quality), x.quality === "Hot Lead" ? "hi-g" : "")}${td(esc(x.stage), "hi")}
+      ${td(x.note ? esc(x.note) : "<i>nothing recorded</i>", "l")}</tr>`)
+      .concat(m.recoverable.length ? [] : [`<tr><td class="l">Nothing to recover.</td></tr>`]));
+}
+
+function renderUnassigned() {
+  const u = DATA.metrics.unassigned;
+  if (!u.length) {
+    $("#unKpis").innerHTML = "";
+    $("#tUnassigned").innerHTML = `<tbody><tr><td class="l">
+      <div class="empty"><h3>Every lead has an owner</h3>
+      Nothing arrived with a blank salesperson this week.</div></td></tr></tbody>`;
+    return;
+  }
+  const qty = u.reduce((s, x) => s + x.qty, 0);
+  $("#unKpis").innerHTML = [
+    ["crit", "Leads with no owner", nf(u.length), "nobody has opened these"],
+    ["crit", "Demand at risk", nf(qty) + " pcs", "sitting with no salesperson"],
+    ["bad", "Oldest", Math.max(...u.map(x => x.age)) + " days", "since it arrived"],
+    ["warn", "Biggest single enquiry", nf(u[0].qty) + " pcs", esc(u[0].customer || "—")],
+  ].map(([c, l, n, f]) => `<div class="kpi ${c}"><div class="lab">${l}</div>
+      <div class="num">${n}</div><div class="foot">${f}</div></div>`).join("");
+  table("#tUnassigned", ["Qty (pcs)", "Age", "Received", "Source", "Customer", "Phone", "City", "Requirement"],
+    u.map(x => `<tr class="${x.qty >= 50 ? "unass" : ""}">
+      ${td(`<b>${nf(x.qty)}</b>`)}${td(x.age + "d", x.age >= 4 ? "hi" : "")}${td(fdate(x.date))}
+      ${td(esc(x.source))}${td(esc(x.customer), "nm")}${td(esc(x.phone))}
+      ${td(esc(x.city), "l")}${td(esc(x.product), "l")}</tr>`));
+}
+
+/* ═══════════════════════════════════════════════════ reconciliation */
+
+function renderRecon() {
+  const rec = DATA.reconciliation, t = rec.control_totals;
+  $("#balance").innerHTML = `<div class="balance ${t.balanced ? "" : "off"}">
+    <span class="tick">${t.balanced ? "&#10003;" : "!"}</span>
+    <span>${t.balanced
+      ? "Balanced — every row is accounted for. Parsed − no-date − out-of-period − duplicates = accepted."
+      : "Out of balance — investigate before relying on these numbers."}</span></div>`;
+  $("#flow").innerHTML = [
+    ["parsed", "Rows parsed", ""], ["no_date", "No date", "minus"],
+    ["out_of_period", "Out of period", "minus"], ["duplicates", "Duplicates", "minus"],
+    ["accepted", "Accepted", "end"],
+  ].map(([k, lab, cls], i) => `${i ? `<span class="op">${cls === "end" ? "=" : "−"}</span>` : ""}
+      <div class="step ${cls}"><div class="v">${nf(t[k])}</div><div class="k">${lab}</div></div>`).join("");
+
+  table("#tFiles", ["File", "Rows read", "Blank", "Parsed", "No date", "Out of period", "Duplicates", "Accepted"],
+    rec.per_file.map(p => `<tr>${td(esc(p.file), "nm")}${td(nf(p.rows_read))}${td(dash(p.rows_blank))}
+      ${td(nf(p.parsed))}${td(dash(p.no_date))}${td(dash(p.out_of_period))}
+      ${td(dash(p.duplicates), p.duplicates ? "hi" : "")}${td(`<b>${nf(p.accepted)}</b>`)}</tr>`)
+      .concat(`<tr class="tot">${td("TOTAL")}${td(nf(t.rows_read))}${td(nf(t.rows_blank))}
+        ${td(nf(t.parsed))}${td(dash(t.no_date))}${td(dash(t.out_of_period))}
+        ${td(dash(t.duplicates))}${td(nf(t.accepted))}</tr>`));
+
+  const sheets = rec.per_file.flatMap(p => p.sheets);
+  table("#tSheets", ["File", "Sheet", "Format detected", "Rows", "Columns seen"],
+    sheets.map(s => `<tr>${td(esc(s.file), "nm")}${td(esc(s.sheet))}
+      ${td(s.profile ? esc(s.label) : "<i>not recognised — skipped</i>", s.profile ? "hi-g" : "")}
+      ${td(dash(s.rows))}${td(`<span class="mono" style="font-size:10.5px">${esc((s.headers || []).slice(0, 10).join(" · "))}</span>`, "l")}</tr>`));
+}
+
+function renderExceptions() {
+  const rec = DATA.reconciliation;
+  const sevs = ["ALL", "critical", "high", "medium", "low"].filter(s =>
+    s === "ALL" || rec.exceptions.some(e => e.severity === s));
+  if (!sevs.includes(EXSEV)) EXSEV = "ALL";
+  $("#exFilter").innerHTML = sevs.map(s => {
+    const n = s === "ALL" ? rec.exceptions.length : rec.exceptions.filter(e => e.severity === s).length;
+    return `<button data-sev="${s}" aria-pressed="${s === EXSEV}">${s === "ALL" ? "All" : s} (${n})</button>`;
+  }).join("");
+  drawExceptions();
+}
+function drawExceptions() {
+  const rows = DATA.reconciliation.exceptions.filter(e => EXSEV === "ALL" || e.severity === EXSEV);
+  table("#tExceptions", ["Severity", "Type", "What was found", "Detail", "Source row", "Suggested fix"],
+    rows.map(e => `<tr>${td(`<span class="sev ${e.severity}">${e.severity}</span>`)}
+      ${td(`<span class="mono" style="font-size:11px">${esc(e.kind)}</span>`, "l")}
+      ${td(esc(e.message), "l")}${td(`<span style="color:var(--muted)">${esc(e.detail)}</span>`, "l")}
+      ${td(`<span class="mono" style="font-size:10.5px;color:var(--muted)">${esc(e.ref)}</span>`, "l")}
+      ${td(`<span style="color:var(--muted)">${esc(e.fix)}</span>`, "l")}</tr>`)
+      .concat(rows.length ? [] : [`<tr><td class="l">Nothing at this severity.</td></tr>`]));
+}
+$("#exFilter").addEventListener("click", e => {
+  const b = e.target.closest("[data-sev]"); if (!b) return;
+  EXSEV = b.dataset.sev;
+  $$("#exFilter button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.sev === EXSEV)));
+  drawExceptions();
+});
+
+/* ═══════════════════════════════════════════════════ history */
+
+const initials = n => (n || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
+
+async function paintNames() {
+  const user = Store.user;
+  const nodes = $$("[data-who]");
+  if (!nodes.length) return;
+  if (!user || typeof user.profiles !== "function") {
+    nodes.forEach(n => n.closest(".who")?.remove());
+    return;
+  }
+  const ids = [...new Set(nodes.map(n => n.dataset.who).filter(Boolean))];
+  let ps = {};
+  try { ps = (await user.profiles(ids)) || {}; } catch (_) {}
+  nodes.forEach(n => {
+    const name = (ps[n.dataset.who] && ps[n.dataset.who].name) || "";
+    const who = n.closest(".who");
+    if (!name) { who?.remove(); return; }
+    n.textContent = name;
+    const av = who.querySelector(".av");
+    if (av) av.textContent = initials(name);
+  });
+}
+
+function renderHistory() {
+  const trend = Store.trend();
+  const canWrite = Store.mode !== "shared" || Store.canWrite;
+
+  if (!trend.length) {
+    $("#tTrend").innerHTML = `<tbody><tr><td class="l"><div class="empty">
+      <h3>No history yet</h3>Run a week, then run the next one, and the comparison appears here.
+      </div></td></tr></tbody>`;
+    $("#runs").innerHTML = `<div class="empty">Nothing saved yet.</div>`;
+    $("#recentWrap").hidden = true;
+    return;
+  }
+  const delta = (cur, prev, better = "up") => {
+    if (prev == null) return "";
+    const d = +(cur - prev).toFixed(2);
+    if (!d) return `<span class="delta">·</span>`;
+    const good = better === "up" ? d > 0 : d < 0;
+    return `<span class="delta ${good ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(2)}</span>`;
+  };
+  table("#tTrend", ["Week ending", "Leads", "Never worked", "Touch rate", "Qualification rate",
+                    "Conversion %", "Unassigned", "Demand (pcs)"],
+    trend.map((r, i) => { const p = i ? trend[i - 1] : null;
+      return `<tr>${td(`${fdate(r.period_start)} – ${fdate(r.period_end)}`, "nm")}
+        ${td(nf(r.leads))}${td(dash(r.new))}
+        ${td(`${pcts(r.touch_rate)} ${delta(r.touch_rate, p?.touch_rate, "up")}`)}
+        ${td(`${pcts(r.qual_rate)} ${delta(r.qual_rate, p?.qual_rate, "up")}`)}
+        ${td(`${pc2(r.conversion)} ${delta(r.conversion, p?.conversion, "up")}`)}
+        ${td(`${dash(r.unassigned)} ${delta(r.unassigned, p?.unassigned, "down")}`)}
+        ${td(nf(r.qty))}</tr>`; }));
+
+  const row = r => `
+    <div class="runrow">
+      <div><div class="p">${fdate(r.period_start)} – ${fdate(r.period_end)}</div>
+        <div class="m">${nf(r.leads)} leads · ${pc2(r.conversion)} conversion · ${esc((r.files || []).join(", ")).slice(0, 90)}</div>
+        ${r.by ? `<span class="who"><span class="av">·</span><span data-who="${esc(r.by)}">…</span></span>` : ""}</div>
+      <div class="sp"><button class="btn ghost sm" data-open="${esc(r.run_id)}">Open</button>
+        ${canWrite ? `<button class="btn ghost sm" data-del="${esc(r.run_id)}">Delete</button>` : ""}</div>
+    </div>`;
+
+  $("#runs").innerHTML = [...trend].reverse().map(row).join("");
+  const recent = Store.runs.slice(0, 5);
+  $("#recentWrap").hidden = !recent.length;
+  $("#recent").innerHTML = recent.map(row).join("");
+  paintNames();
+}
+
+async function openRun(id, btn) {
+  const was = btn.textContent;
+  btn.disabled = true; btn.textContent = "Opening…";
+  try {
+    const payload = await Store.open(id);
+    IS_SAMPLE = false;
+    load(payload);
+    show("overview");
+  } catch (err) {
+    console.warn(err);
+    toast("That run could not be opened — its saved detail is missing.");
+  } finally { btn.disabled = false; btn.textContent = was; }
+}
+
+document.addEventListener("click", async e => {
+  const o = e.target.closest("[data-open]"), d = e.target.closest("[data-del]");
+  if (o) return openRun(o.dataset.open, o);
+  if (d) {
+    const r = Store.runs.find(x => x.run_id === d.dataset.del);
+    const label = r ? `${fdate(r.period_start)} – ${fdate(r.period_end)}` : "this run";
+    if (!window.confirm(`Delete the saved run for ${label}?` +
+        (Store.mode === "shared" ? " It will disappear for everyone on the team." : ""))) return;
+    d.disabled = true;
+    try { await Store.remove(d.dataset.del); toast("Run deleted.", true); }
+    catch (err) { console.warn(err); toast("That run could not be deleted."); d.disabled = false; }
+  }
+});
+
+/* ═══════════════════════════════════════════════════ Excel download */
+
+let excelBusy = false;
+async function download(btn) {
+  if (!DATA || excelBusy) return;
+  excelBusy = true;
+  const was = btn.textContent;
+  btn.disabled = true; btn.textContent = "Building…";
+  try {
+    if (!window.ExcelJS) throw new Error("the spreadsheet library did not load");
+    const per = DATA.metrics.period;
+    const name = `Master_Lead_Report_${per.start}_to_${per.end}.xlsx`;
+    const buf = await REP.build(window.ExcelJS, DATA.reconciliation, DATA.metrics,
+                                DATA.insights, CFG);
+    const blob = new Blob([buf], { type:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const dl = await useCap("downloads");
+    if (dl) {
+      await dl.save({ filename: name, data: blob });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click();
+      a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+  } catch (err) {
+    if (err && err.code === "declined") { /* the viewer said no; nothing to report */ }
+    else { console.error(err); toast(`The Excel report could not be built — ${err.message || err}`); }
+  } finally {
+    excelBusy = false; btn.disabled = false; btn.textContent = was;
+  }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest(".dl");
+  if (b) download(b);
+});
+
+/* ═══════════════════════════════════════════════════ start */
+
+Store.onChange(renderHistory);
+renderHistory();
+Store.init();
+})();
+</script>
+</body>
+</html>
