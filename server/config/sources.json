@@ -1,0 +1,102 @@
+{
+  "_comment": "Source profiles. To support a NEW export format, add a profile here — no Python changes needed.",
+  "canonical": {
+    "stages": ["New", "Contacted", "Qualified", "Quoted / Proposal", "Won", "Lost", "Not Qualified"],
+    "open_stages": ["New", "Contacted", "Qualified", "Quoted / Proposal"],
+    "closed_no_order": ["Lost", "Not Qualified"],
+    "won_stage": "Won",
+    "untouched_stage": "New",
+    "qualities": ["Hot Lead", "Warm Lead", "Cold Lead", "Don't Pick Call", "Not Interested", "Not Rated"],
+    "unassigned_label": "(UNASSIGNED)"
+  },
+  "rep_aliases": {
+    "_comment": "Left side is matched case-insensitively after trimming. Use this when one person appears under two spellings.",
+    "ujala rajput": "Ujala Rajput",
+    "amira saikh": "Amira Saikh",
+    "amira sheikh": "Amira Saikh",
+    "mayank mittal": "Mayank Mittal",
+    "niti kumari": "Niti Kumari"
+  },
+  "quality_rules": [
+    { "contains": "hot",      "value": "Hot Lead" },
+    { "contains": "warm",     "value": "Warm Lead" },
+    { "contains": "cold",     "value": "Cold Lead" },
+    { "contains": "pick",     "value": "Don't Pick Call" },
+    { "contains": "interest", "value": "Not Interested" }
+  ],
+  "null_tokens": ["", "0", "00", "-", "na", "n/a", "none", "null", "nil", "#n/a"],
+  "placeholder_names": {
+    "_comment": "Generic names that many different buyers share in these exports. Never treat two rows as the same lead just because they carry one of these.",
+    "values": ["jd buyer", "justdial buyer", "buyer", "buyer call", "customer", "india mart buyer",
+               "indiamart buyer", "test", "asdf", "abc", "xyz", "na", "unknown", "new enquiry"]
+  },
+  "disposition_rules": [
+    { "id": "invalid",     "label": "Invalid / fake lead",                  "any_regex": "fake|vaild|invalid" },
+    { "id": "no_req",      "label": "No requirement",                       "any_regex": "\\bnot\\s*requ|\\bno\\s*requ" },
+    { "id": "price",       "label": "Price / budget mismatch",              "any_regex": "low price|cheap|budget|(price.*requir)" },
+    { "id": "live_req",    "label": "Had a live requirement - lost anyway", "any_regex": "requir|requr", "severity": "recoverable" },
+    { "id": "callback",    "label": "Callback committed, never done",       "any_regex": "call ?back", "severity": "recoverable" },
+    { "id": "no_resp_cat", "label": "No response (catalogue shared)",       "all_regex": ["not pick|nopt pick|not pink|call cut", "catalog|catalou"] },
+    { "id": "no_resp",     "label": "No response / call not picked",        "any_regex": "not pick|nopt pick|not pink|call cut" },
+    { "id": "catalogue",   "label": "Catalogue shared, no closure",         "any_regex": "catalog|catalou", "severity": "recoverable" },
+    { "id": "too_small",   "label": "Order too small (single piece)",       "any_regex": "one chair|only\\s*1\\s*pec|1\\s*pec" },
+    { "id": "range",       "label": "Product / range mismatch",             "any_regex": "plastec|plastic|plastecki|workstoson|geeken|godrej|featherlite|import|hotal|hotel|spare|parts|brand", "severity": "product" },
+    { "id": "logistics",   "label": "Location / logistics objection",       "any_regex": "delhi base|dont want to deal|local|near by" }
+  ],
+  "profiles": [
+    {
+      "id": "meta",
+      "label": "Meta Ads",
+      "match": { "required": ["lead_status", "assigned_to"], "any": ["created_time_ist", "platform", "full_name"] },
+      "source_name": { "const": "Meta", "sub_column": "platform", "sub_map": { "ig": "Instagram", "fb": "Facebook" } },
+      "fields": {
+        "date":     { "from": ["created_time_ist"], "formats": ["%d-%m-%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S"] },
+        "rep":      { "from": ["assigned_to"] },
+        "customer": { "from": ["full_name"] },
+        "phone":    { "from": ["phone_number"] },
+        "city":     { "from": ["city_state"] },
+        "product":  { "from": [] },
+        "qty":      { "from": [] },
+        "note":     { "from": [] }
+      },
+      "stage":   { "from": ["lead_status"], "map": { "CREATED": "New", "NEW": "New", "CONTACTED": "Contacted", "QUALIFIED": "Qualified", "PROPOSAL": "Quoted / Proposal", "QUOTED": "Quoted / Proposal", "WON": "Won", "LOST": "Lost", "NOT QUALIFIED": "Not Qualified" }, "blank": "New" },
+      "quality": { "from": [], "blank": "Not Rated" }
+    },
+    {
+      "id": "justdial_workflow",
+      "label": "JustDial / enquiry workflow",
+      "match": { "required": ["Stage", "Salesperson"], "any": ["Enquiry Id", "Product", "Source"] },
+      "source_name": { "column": "Source", "normalize": { "india": "IndiaMart", "just": "JustDial", "meta": "Meta" }, "default": "JustDial" },
+      "fields": {
+        "date":     { "from": ["Date", "Enquiry Time"] },
+        "rep":      { "from": ["Salesperson"] },
+        "customer": { "from": ["Customer"] },
+        "phone":    { "from": ["Mobile", "Phone"] },
+        "city":     { "from": ["City"] },
+        "product":  { "from": ["Product"] },
+        "qty":      { "from": ["Qty", "Quantity"] },
+        "note":     { "from": ["DISCUSSION", "Note", "Final Remark's"] }
+      },
+      "stage":   { "from": ["Stage"], "map": { "NEW": "New", "CONTACTED": "Contacted", "QUALIFIED": "Qualified", "PROPOSAL": "Quoted / Proposal", "QUOTED": "Quoted / Proposal", "WON": "Won", "LOST": "Lost", "NOT QUALIFIED": "Not Qualified" }, "blank": "New" },
+      "quality": { "from": ["Lead's Quality"], "blank": "Not Rated" }
+    },
+    {
+      "id": "indiamart_workflow",
+      "label": "IndiaMART workflow",
+      "match": { "required": ["Assigned Salesperson", "Qualification Status"], "any": ["Lead's Quality", "Buyer Name", "Timestamp"] },
+      "source_name": { "const": "IndiaMart" },
+      "fields": {
+        "date":     { "from": ["Timestamp", "Date"] },
+        "rep":      { "from": ["Assigned Salesperson"] },
+        "customer": { "from": ["Buyer Name", "Company Name"] },
+        "phone":    { "from": ["Mobile Number", "Mobile"] },
+        "city":     { "from": ["City/ Location", "CITY", "City"] },
+        "product":  { "from": ["Subject", "Product / Requirement"] },
+        "qty":      { "from": ["Quantity", "QTY NEED"] },
+        "note":     { "from": ["DISCUSSION", "Final Remark's"] }
+      },
+      "stage":   { "from": ["Qualification Status"], "map": { "QUALIFIED": "Qualified", "NOT QUALIFIED": "Not Qualified", "LOST": "Lost", "WON": "Won" }, "blank": "New" },
+      "quality": { "from": ["Lead's Quality"], "blank": "Not Rated" }
+    }
+  ]
+}
